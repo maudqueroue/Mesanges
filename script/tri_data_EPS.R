@@ -1,9 +1,13 @@
 rm(list=ls())
-setwd("~/These/MNHN/Fichiers_bruts")
-library(tidyverse)
+
+# Packages necessaires
+devtools::install_deps(upgrade="never")
+
+# Load fonctions importantes
+devtools::load_all() 
 
 # Les data
-data <- read.table(here::here("STOC_EPS.csv"),head=T,sep=";") 
+data <- read.table(here::here("data","STOC_EPS.csv"),head=T,sep=";") 
 
 data_geo <- data %>%
         dplyr::select("point","carre","longitude_wgs84","latitude_wgs84") %>%
@@ -13,8 +17,8 @@ data_sp <- data %>%
              dplyr::select("point","carre","annee","code_sp","abondance") %>%
              tidyr::pivot_wider(names_from = code_sp, values_from = abondance) 
              
-
-carre <- read.table(here::here("carre_annees.csv"),head=T,sep=";")
+# Les data sur les carres
+carre <- read.table(here::here("data","EPS_carres.csv"),head=T,sep=";")
 
 id_carre_tot <- carre %>%
                       dplyr::distinct(id_carre)
@@ -35,7 +39,7 @@ for(i in 1:nrow(id_carre_tot)) {
     dplyr::rename(name_point = 'data_carre$point')
   nb_point <- dplyr::n_distinct(name_point)
   
-  # Nombre d annee effectue
+  # Nombre d annees effectuees
   annee_carre <- carre %>%
     dplyr::filter(id_carre %in% name_carre)
   name_annee <- dplyr::distinct(as.data.frame(annee_carre$annee)) %>%
@@ -55,9 +59,11 @@ for(i in 1:nrow(id_carre_tot)) {
 } 
 
 # On fait le lien entre les point et leur geolocalisation
-new_geo <- dplyr::left_join(new,data_geo, by=c("carre","point"))
+new_geo <- dplyr::left_join(new, data_geo, by = c("carre", "point"))
 # On ajoute les comptage de sp
-data_EPS <- dplyr::left_join(new_geo,data_sp, by=c("carre","point","annee")) 
+data_EPS <- dplyr::left_join(new_geo, data_sp, by =c ("carre", "point", "annee")) 
+
+rm(data_geo, data, carre, data_sp, id_carre_tot, new, new_geo, i)
 
 # On sauve le fichier
-
+save(data_EPS, file = here::here("output","data_EPS.RData"))
