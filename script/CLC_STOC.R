@@ -13,12 +13,10 @@ shp_CLC <- sf::st_read(dsn   = here::here("data","CLC12_FR_RGF_SHP"),
 
 # Les differents points avec leur longitude et latitude et type CLC
 
-CLC_STOC <- read.table(here::here("data","station_stoc_cor_maud.csv"),head=T,sep=";") %>%
+CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
                dplyr::rename(
-               long = 'Longitude',
-               lat  = 'Latitude') %>%
-               dplyr::filter(Verif != "non") %>%
-               dplyr::select("ID_PROG", "long", "lat") %>%
+               long = 'Lon',
+               lat  = 'Lat') %>%
                tibble::add_column(CLC_1 = NA) %>%
                tibble::add_column(CLC_2 = NA)
 
@@ -33,7 +31,7 @@ for (i in 1:nrow(CLC_STOC)) {
 }
 
 # On sauve le fichier
-save(CLC_STOC, file  = here::here("output","CLC_STOC.RData"))
-
+save(CLC_STOC, file  = here::here("output","CLC_STOC_new.RData"))
+write.csv(CLC_STOC,here::here("output","CLC_STOC.csv"))
 
 

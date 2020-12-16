@@ -30,7 +30,7 @@ dsf_EPS <-  Mesanges::give_point(CLC_EPS)
 
 
 # On recupere les premiers code CLC
-for (i in 1:20) {
+for (i in 1:nrow(CLC_STOC)) {
   CLC_EPS[i,] <- Mesanges::give_CLC(dsf_EPS[i,], CLC_EPS[i,], shp_CLC)
 }
 
