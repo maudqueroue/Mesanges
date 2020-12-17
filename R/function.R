@@ -144,3 +144,87 @@ plot_carte_STOC <- function(nb_STOC, CLC_STOC, shp) {
             expand=FALSE)
   )
 }
+
+
+#' Calcul index
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+index <- function (data, data_sp) { 
+  
+  # Nombre de stations STOC
+  nsites <- length(unique(data$ID_PROG))
+  # Nombre d'annees
+  nyears <- length(unique(data$annee))
+  
+  # effet fixe annee et site 
+  model.glm <- glm(as.numeric(data_sp) ~ 0 + as.factor(ID_PROG) + as.factor(annee), data = data, family = 'poisson')
+  
+  # Calcul de l'index en supposant que alpha et beta suivent des normales et en faisant du Monte Carlo, on simule un grand nombre de valeurs.
+  
+  alphaihat <- model.glm$coefficients[1:nsites]
+  se_alphaihat <- summary(model.glm)$coefficients[,'Std. Error'][1:nsites]
+  
+  nbMC <- 100
+  aik <- matrix(NA, nrow = nsites, ncol = nbMC)
+  for (i in 1:nsites){
+    for (j in 1:nbMC){
+      aik[i,j] <- rnorm(1, mean = alphaihat[i], sd = se_alphaihat[i])
+    }
+  }
+  
+  betathat <- model.glm$coefficients[(nsites+1):length(model.glm$coefficients)]
+  se_betathat <- summary(model.glm)$coefficients[,'Std. Error'][(nsites+1):length(model.glm$coefficients)]
+  
+  btk <- matrix(NA, nrow = nyears - 1, ncol = nbMC)
+  for (i in 1:(nyears - 1)){
+    for (j in 1:nbMC){
+      btk[i,j] <- rnorm(1, mean = betathat[i], sd = se_betathat[i])
+    }
+  }
+  
+  # On calcule le gamma
+  sumi_expaik <- apply(exp(aik), 2, sum)                                                              
+  
+  #gammat
+  gammat <- matrix(NA, nrow = nbMC, ncol = (nyears - 1))
+  for (i in 1:(nyears - 1)){
+    for (j in 1:nbMC){
+      gammat[j,i] <- sumi_expaik[j] * exp(btk[i,j])
+    }
+  }
+  
+  # On calcule la moyenne des log et leur variance 
+  logyt <- apply(log(gammat), 2, mean)
+  
+  sigma2tt <- (log(gammat) - matrix(rep(logyt, nbMC), nrow = nbMC, byrow = T))^2
+  sigma2t <- apply(sigma2tt, 2, mean)
+  
+  
+  index_mean <- logyt
+  index_sd <- sigma2t
+  
+  out <- list(index_mean, index_sd)
+  return(out)
+}
+
+
+plot_index <- function(mean, sd, col, sp, hab) {
+  
+  df <- data.frame(years = 2:19,
+                    logy = mean,
+                    sigma = sd)
+  df %>%
+    ggplot2::ggplot() +
+    ggplot2::aes(x = as.numeric(years), y = logy) +
+    ggplot2::geom_line(col = col,size = 2) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = logy - 2 * sigma,
+                    ymax = logy + 2 * sigma), alpha = 0.25, fill = col) +
+    ggplot2::labs(title = paste("Variations annuelles index log y [t], pour ",sp," dans habitat ", hab, sep=""),
+         y = 'log(yt)') +
+    ggplot2::scale_x_continuous(name="years", breaks=seq(1,19,3),labels=seq(2001,2019,3))+
+    ggplot2::theme_minimal()
+}

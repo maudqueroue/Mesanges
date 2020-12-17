@@ -20,6 +20,9 @@ data_sp <- data %>%
 # Les data sur les carres
 carre <- read.table(here::here("data","EPS_carres.csv"),head=T,sep=";")
 
+carre <- carre %>%
+  dplyr::filter(carre$annee != 1914)
+
 id_carre_tot <- carre %>%
                       dplyr::distinct(id_carre)
 

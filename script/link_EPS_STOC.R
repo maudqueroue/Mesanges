@@ -30,6 +30,8 @@ for (i in 1:nrow(CLC_STOC)) {
   point_by_site[[i]] <- Mesanges::give_point_by_site(dsf_STOC[i,], dsf_EPS, 25)
 }
 
+save(point_by_site, file  = here::here("output","point_by_site.RData"))
+
 
 ###### Carte
 

@@ -18,4 +18,5 @@ Imports:
     sp,
     ggplot2,
     here,
-    magrittr
+    magrittr,
+    AER
