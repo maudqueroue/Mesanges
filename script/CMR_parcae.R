@@ -6,11 +6,6 @@
 rm(list=ls())
 
 library(nimble)
-# Packages necessaires
-devtools::install_deps(upgrade="never")
-
-# Load fonctions importantes
-devtools::load_all() 
 
 #################
 #     Data      #
@@ -295,8 +290,8 @@ for(n in nodesSorted) {
 m$calculate()
 
 n.thin = 5
-n.burnin = 50 #5000
-n.keep.exact = 100 #10000
+n.burnin = 5000
+n.keep.exact = 10000
 n.keep = n.keep.exact * n.thin
 n.iter = n.burnin + n.keep
 n.chains = 2

@@ -364,7 +364,7 @@ rm(ind_pb)
 
 load(here::here('output',"hvie_ID_PROG.RData"))
 
-#Quels sont les sites concernant les parmaj
+#Quels sont les sites concernant les parcae
 hvie_ID_PROG_parcae <- hvie_ID_PROG %>%
   dplyr::filter(hvie_ID_PROG$ID_PROG %in% unique(hvie_parcae$ID_PROG))
 

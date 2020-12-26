@@ -8,12 +8,6 @@ devtools::load_all()
 
 #EPS
 load(here::here("output","CLC_EPS.RData"))
-CLC_EPS <- dplyr::as_tibble(CLC_EPS) %>%
-               dplyr::rename(
-               lat = 'latitude',
-               long = 'longitude',
-               CLC_1 = 'CLC',
-               CLC_2 = 'CLC_nd')
 
 # STOC
 load(here::here("output","CLC_STOC.RData"))
@@ -25,12 +19,12 @@ dsf_EPS <-  Mesanges::give_point(CLC_EPS)
 
 
 # Point par par station STOC
-point_by_site <- list()
+EPS_by_STOC <- list()
 for (i in 1:nrow(CLC_STOC)) {
-  point_by_site[[i]] <- Mesanges::give_point_by_site(dsf_STOC[i,], dsf_EPS, 25)
+  EPS_by_STOC[[i]] <- Mesanges::give_point_by_site(dsf_STOC[i,], 25, CLC_EPS)
 }
 
-save(point_by_site, file  = here::here("output","point_by_site.RData"))
+save(EPS_by_STOC, file  = here::here("output","EPS_by_STOC.RData"))
 
 
 ###### Carte
@@ -40,5 +34,5 @@ shp_CLC <- sf::st_read(dsn   = here::here("data","CLC12_FR_RGF_SHP"),
                        layer = "CLC12_FR_RGF") %>%
   sf::st_transform(shp,crs = 2154)
 
-Mesanges::plot_carte(9, dsf_STOC, dsf_EPS, CLC_EPS, 25, shp_CLC)
+Mesanges::plot_carte(9, dsf_STOC, CLC_EPS, 25, shp_CLC)
 

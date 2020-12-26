@@ -36,5 +36,8 @@ for (i in 1:5){#nrow(CLC_EPS)) {
 
 save(CLC_EPS, file  = here::here("output","CLC_EPS.RData"))
 
+# Carte
+load(here::here("output","CLC_EPS.RData"))
+Mesanges::plot_carte_point(379, CLC_EPS, shp_CLC)
 
 
