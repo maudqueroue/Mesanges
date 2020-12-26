@@ -228,3 +228,322 @@ plot_index <- function(mean, sd, col, sp, hab) {
     ggplot2::scale_x_continuous(name="years", breaks=seq(1,19,3),labels=seq(2001,2019,3))+
     ggplot2::theme_minimal()
 }
+
+
+
+#' Calcul nouvel age
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+new_age <- function (data) { 
+  
+data <- data %>%
+  tibble::add_column(new_AGE = NA)
+
+# Juv
+data$new_AGE[which(data$AGE=="PUL")]<- "P"
+data$new_AGE[which(data$AGE=="1A")] <- "P"
+data$new_AGE[which(data$AGE=="1A?")]<- "P"
+
+# Ad
+data$new_AGE[which(data$AGE=="+1A")]<- "A"
+data$new_AGE[which(data$AGE=="+1?")]<- "A"
+data$new_AGE[which(data$AGE=="2A")] <- "A"
+data$new_AGE[which(data$AGE=="2A?")]<- "A"
+data$new_AGE[which(data$AGE=="+2A")]<- "A"
+data$new_AGE[which(data$AGE=="+2?")]<- "A"
+data$new_AGE[which(data$AGE=="+3A")]<- "A"
+data$new_AGE[which(data$AGE=="4A")] <- "A"
+data$new_AGE[which(data$AGE=="+4A")]<- "A"
+data$new_AGE[which(data$AGE=="+6A")]<- "A"
+
+# Incertains
+data$new_AGE[which(data$AGE=="")]   <- "C"
+data$new_AGE[which(data$AGE=="VOL")]<- "C"
+
+return(data)
+}
+
+#' Calcul hvie
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+hvie <- function(data, hvie_sp) {
+  K <- 19
+  N <- nrow(hvie_sp)
+  
+  #Pour avoir des informations
+  d <- matrix(NA,nrow(hvie_sp),K)
+  d2 <- matrix(NA,nrow(hvie_sp),K)
+  
+  for (i in 1:N) {
+    a <- subset(data,data$BAGUE==hvie_sp$ID[i])
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      
+      if (nrow(b)==0) {hvie_sp[i,j] <- 0}
+      if (nrow(b)==1) {hvie_sp[i,j] <- b$new_AGE[1]}
+      if (nrow(b)>1)  {
+        
+        c <- unique(b$new_AGE)
+        d[i,j] <- length(c)
+        d2[i,j] <- paste(c,collapse="")
+        
+        if(length(which(c=="A"))>0  & length(which(c=="P"))>0 ) {hvie_sp[i,j]  <- "AP"}
+        if(length(which(c=="A"))>0  & length(which(c=="P"))==0) {hvie_sp[i,j]  <- "A" }
+        if(length(which(c=="A"))==0 & length(which(c=="P"))>0 ) {hvie_sp[i,j]  <- "P" }
+        if(length(which(c=="A"))==0 & length(which(c=="P"))==0 ){hvie_sp[i,j]  <- "C" }
+        
+        rm(c)
+      }
+      rm(b)
+    }
+    rm(a)
+  }
+  return(list(hvie_sp,d,d2))
+}
+
+#' Calcul transient
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+transient <- function(data, hvie_sp) {
+K <- 19
+N <- nrow(hvie_sp)
+
+  transient <- matrix(NA,N,K)
+  
+  for (i in 1:N) {
+    a <- subset(data,data$BAGUE==hvie_sp$ID[i])
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      transient[i,j] <- nrow(b)
+      rm(b)
+    }
+    rm(a)
+  }
+  
+  rm(i,j)
+  
+  # Premi?re occasion vu 1 seule fois ? = transient
+  e <- NULL
+  for (i in 1:N){
+    temp <- 1:K
+    e <- c(e,min(temp[transient[i,]>=1]))}
+  
+  # On supprime la premi?re occasion de capture sauf si il a ?t? vu deux fois
+  for(i in 1:N){
+    if(transient[i,e[i]]==1) {hvie_sp[i,e[i]]<-0}
+    if(transient[i,e[i]]>1) {next}
+  }
+  
+  return(hvie_sp)
+}
+
+
+#' Suppression individu hvie = 0
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+supp_ind <- function(hvie_sp) {
+# On verifie le nombre d'individus
+N <- dim(hvie_sp)[1] 
+
+# On supprime les oiseaux qui ne sont vu que transients
+hvie_sp$sum_hvie <- rep(NA,N)
+for(i in 1:N){
+  hvie_sp$sum_hvie[i] <-sum(as.numeric(hvie_sp[i,1:K])) 
+}
+
+# On supprime les choses inutiles
+hvie_sp <- hvie_sp %>%
+  dplyr::filter(!hvie_sp$sum_hvie==0) %>%
+  dplyr::select(!sum_hvie)
+
+return(hvie_sp)
+}
+
+
+#' Gestion des incertains : Si il est capture qu'une seule annee, on supprime
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+check_3 <- function(hvie_sp, check) {
+  N <- dim(hvie_sp)[1] 
+  for(i in 1:length(check)){
+    ligne <- check[i]%%N
+    colonne <- ceiling(check[i]/N)
+    if(length(which(as.numeric(hvie_sp[ligne,1:K])>0))==1){hvie_sp[ligne,colonne] <- 0}
+    else{next}
+    rm(ligne,colonne)
+  }
+  return(hvie_sp)
+}
+
+
+#' Gestion quand plusieurs age la même annee
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+check_4 <- function(data, hvie_sp, check) {
+  
+# S'ils ont ete vus qu'une seule annee, on prend le statut defini lors du bagage
+# Si pas de baguage la seule annee ou il y a ete vu, on le regarde au cas par cas
+# Si individus vus plusieurs annees on regarde au cas par cas
+  N <- dim(hvie_sp)[1]
+  
+  for(i in 1:length(check)){
+    ligne <- check[i]%%N
+    colonne <- ceiling(check[i]/N)
+    bague <- hvie_sp$ID[ligne]
+    a <- subset(data,data$BAGUE==bague)
+    if(length(unique(substr(a$DATE,7,10)))==1){
+      b <- subset(a, a$ACTION=="B")
+      if(nrow(b)>0) {hvie_sp[ligne,colonne] <-b$new_AGE[1]}
+      else {next}
+    }
+    else{next}
+    rm(ligne, colonne, bague, a, b)
+  }
+  return(hvie_sp)  
+} 
+
+
+#' a quel site appartient chaque oiseau
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+ind_site <- function(data, hvie_sp) {
+  
+  N <- dim(hvie_sp)[1]
+  hvie_sp$ID_PROG <- rep(NA,N)
+  hvie_sp$nb_site <- rep(NA,N)
+  
+  for (i in 1:N){
+    # On ne garde dans les donnees correspondant a l'oiseau i
+    a <- subset(data, data$BAGUE==hvie_sp$ID[i])
+    # On r?cup?re les ou l'identifiant(s) de la station
+    hvie_sp$ID_PROG[i] <- paste(unique(a$ID_PROG),collapse="/")
+    #On regarde s'il y a differents station pour un meme oiseaux
+    hvie_sp$nb_site[i] <- length(unique(a$ID_PROG))
+    rm(a)
+  }
+  
+  return(hvie_sp)
+}
+
+#' covariable individuelle
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+cov_ind <- function(data, hvie_sp) {  
+
+# Il nous faut le nombre de captures total (-1 pour transience)
+# et le nombre d'annees de capture
+# pour chaque individus des hvie
+
+  N <- dim(hvie_sp)[1]
+  hvie_sp$nb_capt <- rep(NA,N)
+  hvie_sp$nb_years_capt <- rep(NA,N)
+  
+  for (i in 1:N) {
+    a <- subset(data, data$BAGUE==hvie_sp$ID[i])
+    hvie_sp$nb_years_capt[i] <- length(which(as.numeric(hvie_sp[i,1:K])>0))
+    if(length(unique(a$ID_PROG))==1) {
+      hvie_sp$nb_capt[i] <- (nrow(a)-1)
+    }
+    else {next}
+  }
+  
+  return(hvie_sp)
+}
+
+#' calcul covariable individuelle
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+calcul_cov_ind <- function(hvie_sp) {
+  
+  N <- dim(hvie_sp)[1]
+  hvie_sp$cov_ind <- rep(NA,N)
+  
+  for(i in 1:N) {
+    hvie_sp$cov_ind[i] <- log(1+((hvie_sp$nb_capt[i]-hvie_sp$nb_years_capt[i])/hvie_sp$nb_years_capt[i]))
+  }
+  hvie_sp <- hvie_sp %>%
+    dplyr::select(!nb_capt) %>%
+    dplyr::select(!nb_years_capt) 
+  return(hvie_sp)
+}
+
+#' covariable habitat
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+cov_hab <- function(hvie_PROG) {
+  hab_fav <- c("111","242","311","313","322")
+  S <- dim(hvie_PROG)[1]
+  hvie_PROG$cov_hab <- rep(2,S)
+  hvie_PROG$cov_hab[hvie_PROG$CLC_1 %in% hab_fav] <- 1 
+  
+  hvie_PROG <- hvie_PROG %>%
+    dplyr::select(!CLC_1) %>%  
+    dplyr::select(!CLC_2) %>%  
+    dplyr::select(!lat) %>%  
+    dplyr::select(!long) 
+  
+  return(hvie_PROG)
+}
+
+
+#' lien hvie_PROG et hvie_IND
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+link_hvie <- function(hvie_sp, hvie_PROG) {
+
+# On cree le vecteur avec le nouveau numero de site de 1 au nombre total de sites
+  N <- dim(hvie_sp)[1]
+  
+  hvie_sp$vector_ID_PROG <- rep(NA,N)
+
+  for(i in 1:N){
+    hvie_sp$vector_ID_PROG[i] <- which(hvie_PROG$ID_PROG==hvie_sp$ID_PROG[i])
+  }
+  return(hvie_sp)
+}  

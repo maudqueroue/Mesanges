@@ -3,7 +3,6 @@
 #   Mesange Charbonniere #
 ##########################
 setwd("~/These/MNHN/Mesanges")
-rm(list=ls())
 
 # Packages necessaires
 devtools::install_deps(upgrade="never")

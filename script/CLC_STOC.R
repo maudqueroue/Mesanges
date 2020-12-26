@@ -32,7 +32,7 @@ for (i in 1:nrow(CLC_STOC)) {
 
 # On sauve le fichier
 save(CLC_STOC, file  = here::here("output","CLC_STOC.RData"))
-#write.csv(CLC_STOC,here::here("output","CLC_STOC.csv"))
+# write.csv(CLC_STOC,here::here("output","CLC_STOC.csv"))
 
 # Carte 
 Mesanges::plot_carte_STOC(378, CLC_STOC, shp_CLC)

@@ -15,6 +15,7 @@ usethis::use_package("sp")
 usethis::use_package("ggplot2")
 usethis::use_package("here")
 usethis::use_package("AER")
+usethis::use_package("nimble")
 usethis::use_pipe()
 devtools::document()
 
