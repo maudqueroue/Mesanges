@@ -23,7 +23,7 @@ load(here::here("output","data_STOC.RData"))
 
 # 1. Selection de l'espece
 #------------------------
-# On ne garde que les parmaj
+# On ne garde que les parcae
 parcae <- subset(data_STOC,data_STOC$ESPECE=="PARCAE")
 rm(data_STOC)
 
@@ -31,7 +31,7 @@ rm(data_STOC)
 # Annees
 years <- seq(min(unique(substr(parcae$DATE,7,10))),max(unique(substr(parcae$DATE,7,10))),1)
 K <- length(years)
-#Identifiant des parmaj 
+#Identifiant des parcae 
 ID_parcae <- unique(parcae$BAGUE)
 N <- length(ID_parcae)
 
@@ -42,7 +42,7 @@ unique(parcae$AGE)
 parcae <- Mesanges::new_age(parcae)
 
 unique(parcae$new_AGE)
-
+length(which(parcae$new_AGE=="C"))
 # 3. Creation des histoires de vie
 # -----------------------
 
@@ -87,7 +87,7 @@ hvie_parcae <- Mesanges::transient(parcae, hvie_parcae)
 # On supprime les individus qui ne sont pas vu autrement que transients
 hvie_parcae <- Mesanges::supp_ind(hvie_parcae)
 
-# On remet à jour N et ID_parmaj
+# On remet à jour N et ID_parcae
 N <- dim(hvie_parcae)[1]
 ID_parcae <- hvie_parcae$ID
 
@@ -159,7 +159,7 @@ check <- which(hvie_parcae==4) #oui
 # avec uniquement des 0 dans les hvie
 hvie_parcae <- Mesanges::supp_ind(hvie_parcae)
 
-# On remet à jour N et ID_parmaj
+# On remet à jour N et ID_parcae
 N <- dim(hvie_parcae)[1]
 ID_parcae <- hvie_parcae$ID
 
@@ -382,7 +382,6 @@ rm(CLC_STOC)
 # type d'habitat
 hvie_ID_PROG_parcae <- Mesanges::cov_hab(hvie_ID_PROG_parcae)
 
-
 # 11. Creation vecteur pour lier hvie individus et hvie site
 #---------
 
@@ -394,3 +393,36 @@ save(hvie_parcae,file=here::here('output',"hvie_parcae_tot.RData"))
 save(hvie_ID_PROG_parcae,file=here::here('output',"hvie_ID_PROG_parcae_tot.RData"))
 
 
+nb_capt <- NULL
+juv <- NULL
+ad <- NULL
+ad_juv <- NULL
+ad_1 <- NULL
+juv_1 <- NULL
+
+for(i in 1:N){
+  nb_capt[i] <- length(which(hvie_parcae[i,1:K]>0))
+  
+  juv[i] <- length(which(hvie_parcae[i,1:K]==1))
+  ad[i] <- length(which(hvie_parcae[i,1:K]==2))
+  
+  if (nb_capt[i] >1) {
+    if(ad[i]>0 & juv[i]>0){
+      ad_juv[i] <- 1 }
+    else {ad_juv[i] <- 0}
+  }
+  
+  if(nb_capt[i] == 1) {
+    ad_1[i] <- ad[i]
+    juv_1[i] <- juv[i]
+  }
+  else {ad_1[i] <- 0
+  juv_1[i] <- 0}
+}
+
+length(which(nb_capt>1))
+length(which(juv>0))
+length(which(ad>0))
+length(which(ad_1>0))
+length(which(juv_1>0))
+length(which(ad_juv==1))

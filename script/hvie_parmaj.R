@@ -551,5 +551,36 @@ hvie_parmaj <- Mesanges::link_hvie(hvie_parmaj, hvie_ID_PROG_parmaj)
 save(hvie_parmaj,file=here::here('output',"hvie_parmaj_tot.RData"))
 save(hvie_ID_PROG_parmaj,file=here::here('output',"hvie_ID_PROG_parmaj_tot.RData"))
 
+nb_capt <- NULL
+juv <- NULL
+ad <- NULL
+ad_juv <- NULL
+ad_1 <- NULL
+juv_1 <- NULL
 
+for(i in 1:N){
+  nb_capt[i] <- length(which(hvie_parmaj[i,1:K]>0))
+  
+  juv[i] <- length(which(hvie_parmaj[i,1:K]==1))
+  ad[i] <- length(which(hvie_parmaj[i,1:K]==2))
+  
+  if (nb_capt[i] >1) {
+  if(ad[i]>0 & juv[i]>0){
+  ad_juv[i] <- 1 }
+  else {ad_juv[i] <- 0}
+  }
+  
+  if(nb_capt[i] == 1) {
+    ad_1[i] <- ad[i]
+    juv_1[i] <- juv[i]
+  }
+  else {ad_1[i] <- 0
+  juv_1[i] <- 0}
+}
 
+length(which(nb_capt>1))
+length(which(juv>0))
+length(which(ad>0))
+length(which(ad_1>0))
+length(which(juv_1>0))
+length(which(ad_juv==1))
