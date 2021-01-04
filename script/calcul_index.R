@@ -2,6 +2,7 @@
 #   Index PASSEREAUX     #
 ##########################
 rm(list=ls())
+color<-c("#FF8830","#A6B06D","#589482","#8C2423")
 
 # Packages necessaires
 devtools::install_deps(upgrade="never")
@@ -40,7 +41,7 @@ EPS <- dplyr::left_join(data_EPS, CLC_EPS, by = c("point", "lat", "long")) %>%
 # lier les nouveaux tableaux
 
 data <- data.frame("carre" = NA, "annee" = NA, "point" = NA, long= as.numeric("NA"), lat =as.numeric("NA"), PARCAE = as.numeric("NA"), PARMAJ = as.numeric("NA"), SYLATR = as.numeric("NA"), SYLBOR = as.numeric("NA"), CLC_EPS = as.numeric("NA"), ID_PROG = "NA", CLC_STOC = "NA")
-
+# warnings "NA" pas importants
 for (i in 1:nrow(CLC_STOC)) {
   data_add <- EPS %>%
                 dplyr::filter(EPS$point %in% EPS_by_STOC[[i]]) %>%
@@ -100,12 +101,13 @@ rm(data_1, ID_PROG_supr)
 # Calcul de l'index
 index_parmaj_hab1_mean <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[1]]
 index_parmaj_hab1_sd <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[2]]
+
 # save
 save(index_parmaj_hab1_mean, file  = here::here("output","index_parmaj_hab1_mean.RData"))
 save(index_parmaj_hab1_sd, file  = here::here("output","index_parmaj_hab1_sd.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parmaj_hab1_mean, index_parmaj_hab1_sd, "indianred4", "parmaj", "favorable" )
+Mesanges::plot_index(index_parmaj_hab1_mean, index_parmaj_hab1_sd, color[3], "parmaj", "favorable" )
 
 
 #### Data habitat defavorable 
@@ -134,7 +136,7 @@ save(index_parmaj_hab2_mean, file  = here::here("output","index_parmaj_hab2_mean
 save(index_parmaj_hab2_sd, file  = here::here("output","index_parmaj_hab2_sd.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parmaj_hab2_mean, index_parmaj_hab2_sd, "indianred4", "parmaj", "defavorable" )
+Mesanges::plot_index(index_parmaj_hab2_mean, index_parmaj_hab2_sd, color[3], "parmaj", "defavorable" )
 
 
 rm(data_parmaj)
@@ -181,8 +183,8 @@ save(index_parcae_hab1_mean, file  = here::here("output","index_parcae_hab1_mean
 save(index_parcae_hab1_sd, file  = here::here("output","index_parcae_hab1_sd.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parcae_hab1_mean, index_parcae_hab1_sd, "indianred4", "parcae", "favorable" )
-
+Mesanges::plot_index(index_parcae_hab1_mean, index_parcae_hab1_sd, color[2], "parcae", "favorable" )
+Mesanges::plot_glm(data_parcae_1, data_parcae_1$PARCAE)
 
 #### Data habitat defavorable 
 data_parcae_2 <- data_parcae %>%
@@ -210,7 +212,28 @@ save(index_parcae_hab2_mean, file  = here::here("output","index_parcae_hab2_mean
 save(index_parcae_hab2_sd, file  = here::here("output","index_parcae_hab2_sd.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parcae_hab2_mean, index_parcae_hab2_sd, "indianred4", "parcae", "defavorable" )
-
+Mesanges::plot_index(index_parcae_hab2_mean, index_parcae_hab2_sd, color[2], "parcae", "defavorable" )
 
 rm(data_parcae)
+
+
+
+# effet fixe ann?e et site 
+model.glm <- glm(as.numeric(parmaj) ~ 0 + as_factor(ID_PROG) + as_factor(annee), data = data1, family = 'poisson')
+
+# On calcule les valeurs attendues ? chaque site pour chaque ann?e et leur erreur, et on ajoute tout ?a au jeu de donn?es original
+pred <- predict(model.glm, type = 'response', se = TRUE)
+data1$fit.glm <- rep(NA, nrow(data1))
+data1$fit.glm[!is.na(data1$parmaj)] <- pred$fit
+data1$sefit.glm <- rep(NA, nrow(data1))
+data1$sefit.glm[!is.na(data1$parmaj)] <- pred$se.fit
+
+# On repr?sente graphiquement les pr?dictions pour chacun des sites
+data1 %>%
+  ggplot(aes(x = as.numeric(annee), y = as.numeric(parmaj))) +
+  facet_wrap(vars(ID_PROG), scales = "free_y") +
+  geom_point(alpha = 0.25) +
+  geom_ribbon(aes(ymin = fit.glm - 2 * sefit.glm,
+                  ymax = fit.glm + 2 * sefit.glm), alpha = 0.25, fill = "red") +
+  geom_line(aes(y = fit.glm,group=1), color = "red") +
+  labs(y= "index", x="ann?e",title = 'Ajustement du mod?le Poisson avec log(muit) = alphai + betat')

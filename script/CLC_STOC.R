@@ -36,4 +36,4 @@ save(CLC_STOC, file  = here::here("output","CLC_STOC.RData"))
 
 # Carte
 load(here::here("output","CLC_STOC.RData"))
-Mesanges::plot_carte_point(378, CLC_STOC, shp_CLC)
+Mesanges::plot_carte_point(25, CLC_STOC, shp_CLC)

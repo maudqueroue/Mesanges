@@ -100,7 +100,7 @@ plot_carte <- function(nb_STOC, dsf_STOC, CLC_EPS, dist_km, shp) {
           ggplot2::geom_sf(data = polygone, ggplot2::aes(fill=CODE_12)) +
           ggplot2::geom_sf(data = coord_buffer_STOC, ggplot2::aes(fill=NA),colour="white",alpha=0.1) +
           ggplot2::geom_sf(data = dsf_EPS_red) +
-          ggplot2::geom_sf(data = dsf_STOC[nb_STOC,],colour="white",size=7) +
+          ggplot2::geom_sf(data = dsf_STOC[nb_STOC,],colour="white",size=2) +
           ggplot2::coord_sf(
             xlim = c((x-25100),(x+25100)),
             ylim = c((y-25100),(y+25100)),
@@ -547,3 +547,38 @@ link_hvie <- function(hvie_sp, hvie_PROG) {
   }
   return(hvie_sp)
 }  
+
+
+#' lien hvie_PROG et hvie_IND
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+plot_glm <- function (data, data_sp) { 
+  
+  # Nombre de stations STOC
+  nsites <- length(unique(data$ID_PROG))
+  # Nombre d'annees
+  nyears <- length(unique(data$annee))
+  
+  # effet fixe annee et site 
+  model.glm <- glm(as.numeric(data_sp) ~ 0 + as.factor(ID_PROG) + as.factor(annee), data = data, family = 'poisson')
+  
+  pred <- predict(model.glm, type = 'response', se = TRUE)
+  data$fit.glm <- rep(NA, nrow(data))
+  data$fit.glm[!is.na(data_sp)] <- pred$fit
+  data$sefit.glm <- rep(NA, nrow(data))
+  data$sefit.glm[!is.na(data_sp)] <- pred$se.fit
+  
+  # On represente graphiquement les pr?dictions pour chacun des sites
+  data %>%
+    ggplot2::ggplot(ggplot2::aes(x = as.numeric(annee), y = as.numeric(data_sp))) +
+    ggplot2::facet_wrap(ggplot2::vars(ID_PROG), scales = "free_y") +
+    ggplot2::geom_point(alpha = 0.25) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = fit.glm - 2 * sefit.glm,
+                    ymax = fit.glm + 2 * sefit.glm), alpha = 0.25, fill = "red") +
+    ggplot2::geom_line(ggplot2::aes(y = fit.glm,group=1), color = "red") +
+    ggplot2::labs(y= "index", x="annee",title = 'Ajustement du modele Poisson')
+}
