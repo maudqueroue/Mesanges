@@ -3,11 +3,11 @@ Mon travail sur les mésanges :baby_chick:
 
 ## Le plan à suivre :clipboard:
 
-### Tri des données Point d'écoute :loud_sound:
+### Tri des données Points d'écoute :loud_sound:
 
 #### 1.	Tri_data_EPS : Tri des données des points d’écoute (EPS) _(rapide)_
 *	Fichiers entrés (2) : STOC_EPS (data) et EPS_carres (data)
-*	Reconstitution des point d’écoute pour les données manquantes
+*	Reconstitution des points d’écoute pour les données manquantes
 *	Fichiers sortis (1) : data_EPS (output)
 
 ### Récupération des habitats Corine Land Cover :national_park:
@@ -39,14 +39,14 @@ Mon travail sur les mésanges :baby_chick:
 #### 6.	hvie_sp : Histoire de capture par espèce _(rapide)_
 * Fichiers entrés (3) : data_STOC (output), hvie_ID_PROG (output), CLC_STOC (output) 
 * Création des histoires de capture pour les individus avec les covariables correspondantes
-* Ajout d’information dans les histoires de vie des sites pour les sites capturant l’espère
+* Ajout d’information dans les histoires de vie des sites pour les sites capturant l’espèce
 *	Fichiers sortis (2) : hvie_sp_tot (output) et hvie_ID_PROG_sp_tot (output)
 
 ### Calcul des index :chart_with_upwards_trend:
 
 #### 7. Calcul_index : Calcul des index pour chaque sp selon l’habitat _(rapide)_
 * Fichiers entrés (6) : data_EPS (output) et CLC_STOC (output) et CLC_EPS (output) et EPS_by_STOC (output) et hvie_ID_PROG_sp (output)
-* Création d’un fichier répertoriant pour chaque station de capature (STOC), les sp comptées dans les point d’écoute (EPS) dans le buffer de 25km tout en gardant     l’information sur les covariables habitat
+* Création d’un fichier répertoriant pour chaque station de capature (STOC), les sp comptées dans les points d’écoute (EPS) dans le buffer de 25km tout en gardant     l’information sur les covariables habitat
 *	Création des index selon l’espèce et le type d’habitat.
 * Fichiers sortis (8) : index_sp_hab_mean et index_sp_hab_sd
 
