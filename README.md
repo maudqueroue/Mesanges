@@ -6,7 +6,7 @@ Mon travail sur les mésanges :baby_chick:
 ### Tri des données Point d'écoute :loud_sound:
 
 #### 1.	Tri_data_EPS : Tri des données des points d’écoute (EPS) _(rapide)_
-*	Fichiers entrés (2) : STOC_EPS (données brutes) et EPS_carres (data)
+*	Fichiers entrés (2) : STOC_EPS (data) et EPS_carres (data)
 *	Reconstitution des point d’écoute pour les données manquantes
 *	Fichiers sortis (1) : data_EPS (output)
 
@@ -32,7 +32,7 @@ Mon travail sur les mésanges :baby_chick:
 ### Création des histoires de capture à partir des données STOC :hatching_chick::baby_chick::hatched_chick:
 
 #### 5. Tri_data_EPS : Tri des données des stations de capture (STOC) _(rapide)_
-* Fichiers entrés (1) : Data_MNHN (données brutes)
+* Fichiers entrés (1) : Data_MNHN (data)
 * Tri des données et création des histoires de vie des sites
 * Fichiers sortis (2) : data_STOC (ouput) et hvie_ID_PROG (output)
 
