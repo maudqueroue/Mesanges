@@ -54,9 +54,9 @@ Mon travail sur les mésanges :baby_chick:
 
 #### 8. CMR_sp : Modèle CMR pour chaque sp _(LONG ! à faire sur cluster, quelques heures)_
 *	Fichiers entrés (2) : hvie_sp_tot (output) et hvie_ID_PROG_sp_tot (ouput) 
-* Fichiers sortis : out_CMR_sp (1)
+* Fichiers sortis : out_CMR_sp (1) _(pas sur github car fichiers lourds)_
 
 #### 9.	IPM_sp : Modèle intégré pour chaque sp _(LONG ! à faire sur cluster, plusieurs heures)_
 *	Fichiers entrés (6) : hvie_sp_tot (output) et hvie_ID_PROG_sp_tot (ouput) et index_sp_hab_mean (output) et index_sp_hab_sd (output)
-* Fichiers sortis : out_IPM_sp (1)
+* Fichiers sortis : out_IPM_sp (1) _(pas sur github car fichiers lourds)_
 
