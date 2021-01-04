@@ -29,7 +29,7 @@ Mon travail sur les mésanges :baby_chick:
 *	Récupération du nom des points d’écoute autour de chaque station STOC et figure
 * Fichiers sortis (1) : EPS_by_STOC (output)
 
-### Création histoire des hsitoires de capture à partir des données STOC :hatching_chick::baby_chick::hatched_chick:
+### Création des histoires de capture à partir des données STOC :hatching_chick::baby_chick::hatched_chick:
 
 #### 5. Tri_data_EPS : Tri des données des stations de capture (STOC) _(rapide)_
 * Fichiers entrés (1) : Data_MNHN (données brutes)
