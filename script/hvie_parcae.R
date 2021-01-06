@@ -393,6 +393,35 @@ save(hvie_parcae,file=here::here('output',"hvie_parcae_tot.RData"))
 save(hvie_ID_PROG_parcae,file=here::here('output',"hvie_ID_PROG_parcae_tot.RData"))
 
 
+
+# Analyses supplementaires 
+#---------------------------
+rm(list=ls())
+load(here::here('output',"hvie_parcae_tot.RData"))
+load(here::here('output',"hvie_ID_PROG_parcae_tot.RData"))
+
+info_PROG <- hvie_ID_PROG_parcae[,-c(1:19)] %>%
+  dplyr::mutate(ID_PROG=as.factor(ID_PROG)) 
+
+hvie_parcae <- hvie_parcae %>%
+  dplyr::mutate(ID_PROG=as.factor(ID_PROG))
+
+rm(hvie_ID_PROG_parcae)
+
+data <- dplyr::left_join(hvie_parcae, info_PROG, by = c("ID_PROG")) 
+
+
+data_1 <- data %>%
+  dplyr::filter(cov_hab == 1)
+
+data_2 <- data %>%
+  dplyr::filter(cov_hab == 2)
+
+
+# data 1
+N <- nrow(data_1)
+K <- 19
+
 nb_capt <- NULL
 juv <- NULL
 ad <- NULL
@@ -401,10 +430,10 @@ ad_1 <- NULL
 juv_1 <- NULL
 
 for(i in 1:N){
-  nb_capt[i] <- length(which(hvie_parcae[i,1:K]>0))
+  nb_capt[i] <- length(which(data_1[i,1:K]>0))
   
-  juv[i] <- length(which(hvie_parcae[i,1:K]==1))
-  ad[i] <- length(which(hvie_parcae[i,1:K]==2))
+  juv[i] <- length(which(data_1[i,1:K]==1))
+  ad[i] <- length(which(data_1[i,1:K]==2))
   
   if (nb_capt[i] >1) {
     if(ad[i]>0 & juv[i]>0){
@@ -426,3 +455,41 @@ length(which(ad>0))
 length(which(ad_1>0))
 length(which(juv_1>0))
 length(which(ad_juv==1))
+
+# data 2
+N <- nrow(data_2)
+
+nb_capt <- NULL
+juv <- NULL
+ad <- NULL
+ad_juv <- NULL
+ad_1 <- NULL
+juv_1 <- NULL
+
+for(i in 1:N){
+  nb_capt[i] <- length(which(data_2[i,1:K]>0))
+  
+  juv[i] <- length(which(data_2[i,1:K]==1))
+  ad[i] <- length(which(data_2[i,1:K]==2))
+  
+  if (nb_capt[i] >1) {
+    if(ad[i]>0 & juv[i]>0){
+      ad_juv[i] <- 1 }
+    else {ad_juv[i] <- 0}
+  }
+  
+  if(nb_capt[i] == 1) {
+    ad_1[i] <- ad[i]
+    juv_1[i] <- juv[i]
+  }
+  else {ad_1[i] <- 0
+  juv_1[i] <- 0}
+}
+
+length(which(nb_capt>1))
+length(which(juv>0))
+length(which(ad>0))
+length(which(ad_1>0))
+length(which(juv_1>0))
+length(which(ad_juv==1))
+
