@@ -100,15 +100,14 @@ rm(data_1, ID_PROG_supr)
 
 # Calcul de l'index
 index_parmaj_hab1_mean <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[1]]
-index_parmaj_hab1_sd <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[2]]
+index_parmaj_hab1_var <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[2]]
 
 # save
 save(index_parmaj_hab1_mean, file  = here::here("output","index_parmaj_hab1_mean.RData"))
 save(index_parmaj_hab1_sd, file  = here::here("output","index_parmaj_hab1_sd.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parmaj_hab1_mean, index_parmaj_hab1_sd, color[3], "parmaj", "favorable" )
-
+Mesanges::plot_index(index_parmaj_hab1_mean, sqrt(index_parmaj_hab1_var), color[3], "parmaj", "favorable" )
 
 #### Data habitat defavorable 
 data_parmaj_2 <- data_parmaj %>%

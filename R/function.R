@@ -160,8 +160,11 @@ index <- function (data, data_sp) {
   # Nombre d'annees
   nyears <- length(unique(data$annee))
   
-  # effet fixe annee et site 
-  model.glm <- glm(as.numeric(data_sp) ~ 0 + as.factor(ID_PROG) + as.factor(annee), data = data, family = 'poisson')
+  # ajoute nb de repetitions par ID_PROG et annee
+  data <- dplyr::add_count(data, as.factor(ID_PROG), as.factor(annee), name = "nrep")
+
+    # effet fixe annee et site 
+  model.glm <- glm(as.numeric(data_sp) ~ 0 + as.factor(ID_PROG) + as.factor(annee) + offset(log(nrep)), data = data, family = 'poisson')
   
   # Calcul de l'index en supposant que alpha et beta suivent des normales et en faisant du Monte Carlo, on simule un grand nombre de valeurs.
   
@@ -186,16 +189,25 @@ index <- function (data, data_sp) {
     }
   }
   
-  # On calcule le gamma
-  sumi_expaik <- apply(exp(aik), 2, sum)                                                              
+offset <- log(matrix(tidyr::complete(dplyr::count(data, ID_PROG, annee), 
+                              ID_PROG, 
+                              annee, 
+                              fill = list(n = NA))$n, 
+                     ncol = nyears))
   
-  #gammat
-  gammat <- matrix(NA, nrow = nbMC, ncol = (nyears - 1))
-  for (i in 1:(nyears - 1)){
-    for (j in 1:nbMC){
-      gammat[j,i] <- sumi_expaik[j] * exp(btk[i,j])
+  #gammaitk
+  gammaitk <- array(NA, dim = c(nsites, nyears - 1, nbMC))
+  for (t in 1:(nyears - 1)){
+    for (i in 1:nsites){
+      for (k in 1:nbMC){
+        gammaitk[i,t,k] <- exp(offset[i,t + 1] + btk[t,k] + aik[i,k])
+      }
+      
     }
   }
+
+#gammat
+gammat <- t(apply(gammaitk,c(2,3), sum, na.rm = TRUE))
   
   # On calcule la moyenne des log et leur variance 
   logyt <- apply(log(gammat), 2, mean)
@@ -205,9 +217,9 @@ index <- function (data, data_sp) {
   
   
   index_mean <- logyt
-  index_sd <- sigma2t
+  index_var <- sigma2t
   
-  out <- list(index_mean, index_sd)
+  out <- list(index_mean, index_var)
   return(out)
 }
 
