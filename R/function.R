@@ -165,7 +165,7 @@ index <- function (data, data_sp) {
 
     # effet fixe annee et site 
   model.glm <- glm(as.numeric(data_sp) ~ 0 + as.factor(ID_PROG) + as.factor(annee) + offset(log(nrep)), data = data, family = 'poisson')
-  
+
   # Calcul de l'index en supposant que alpha et beta suivent des normales et en faisant du Monte Carlo, on simule un grand nombre de valeurs.
   
   alphaihat <- model.glm$coefficients[1:nsites]

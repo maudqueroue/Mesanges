@@ -104,7 +104,7 @@ index_parmaj_hab1_var <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[2
 
 # save
 save(index_parmaj_hab1_mean, file  = here::here("output","index_parmaj_hab1_mean.RData"))
-save(index_parmaj_hab1_sd, file  = here::here("output","index_parmaj_hab1_sd.RData"))
+save(index_parmaj_hab1_var, file  = here::here("output","index_parmaj_hab1_var.RData"))
 
 # Plot index
 Mesanges::plot_index(index_parmaj_hab1_mean, sqrt(index_parmaj_hab1_var), color[3], "parmaj", "favorable" )
@@ -129,13 +129,13 @@ rm(data_2, ID_PROG_supr)
 
 # Calcul de l'index
 index_parmaj_hab2_mean <- Mesanges::index(data_parmaj_2, data_parmaj_2$PARMAJ)[[1]]
-index_parmaj_hab2_sd <- Mesanges::index(data_parmaj_2, data_parmaj_2$PARMAJ)[[2]]
+index_parmaj_hab2_var <- Mesanges::index(data_parmaj_2, data_parmaj_2$PARMAJ)[[2]]
 # save
 save(index_parmaj_hab2_mean, file  = here::here("output","index_parmaj_hab2_mean.RData"))
-save(index_parmaj_hab2_sd, file  = here::here("output","index_parmaj_hab2_sd.RData"))
+save(index_parmaj_hab2_var, file  = here::here("output","index_parmaj_hab2_var.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parmaj_hab2_mean, index_parmaj_hab2_sd, color[3], "parmaj", "defavorable" )
+Mesanges::plot_index(index_parmaj_hab2_mean, sqrt(index_parmaj_hab2_var), color[3], "parmaj", "defavorable" )
 
 
 rm(data_parmaj)
@@ -176,14 +176,14 @@ rm(data_1, ID_PROG_supr)
 
 # Calcul de l'index
 index_parcae_hab1_mean <- Mesanges::index(data_parcae_1, data_parcae_1$PARCAE)[[1]]
-index_parcae_hab1_sd <- Mesanges::index(data_parcae_1, data_parcae_1$PARCAE)[[2]]
+index_parcae_hab1_var <- Mesanges::index(data_parcae_1, data_parcae_1$PARCAE)[[2]]
 # save 
 save(index_parcae_hab1_mean, file  = here::here("output","index_parcae_hab1_mean.RData"))
-save(index_parcae_hab1_sd, file  = here::here("output","index_parcae_hab1_sd.RData"))
+save(index_parcae_hab1_var, file  = here::here("output","index_parcae_hab1_var.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parcae_hab1_mean, index_parcae_hab1_sd, color[2], "parcae", "favorable" )
-Mesanges::plot_glm(data_parcae_1, data_parcae_1$PARCAE)
+Mesanges::plot_index(index_parcae_hab1_mean, sqrt(index_parcae_hab1_var), color[2], "parcae", "favorable" )
+#Mesanges::plot_glm(data_parcae_1, data_parcae_1$PARCAE)
 
 #### Data habitat defavorable 
 data_parcae_2 <- data_parcae %>%
@@ -205,34 +205,14 @@ rm(data_2, ID_PROG_supr)
 
 # Calcul de l'index
 index_parcae_hab2_mean <- Mesanges::index(data_parcae_2, data_parcae_2$PARCAE)[[1]]
-index_parcae_hab2_sd <- Mesanges::index(data_parcae_2, data_parcae_2$PARCAE)[[2]]
+index_parcae_hab2_var <- Mesanges::index(data_parcae_2, data_parcae_2$PARCAE)[[2]]
 # save
 save(index_parcae_hab2_mean, file  = here::here("output","index_parcae_hab2_mean.RData"))
-save(index_parcae_hab2_sd, file  = here::here("output","index_parcae_hab2_sd.RData"))
+save(index_parcae_hab2_var, file  = here::here("output","index_parcae_hab2_var.RData"))
 
 # Plot index
-Mesanges::plot_index(index_parcae_hab2_mean, index_parcae_hab2_sd, color[2], "parcae", "defavorable" )
+Mesanges::plot_index(index_parcae_hab2_mean, sqrt(index_parcae_hab2_var), color[2], "parcae", "defavorable" )
 
 rm(data_parcae)
 
 
-
-# effet fixe ann?e et site 
-model.glm <- glm(as.numeric(parmaj) ~ 0 + as_factor(ID_PROG) + as_factor(annee), data = data1, family = 'poisson')
-
-# On calcule les valeurs attendues ? chaque site pour chaque ann?e et leur erreur, et on ajoute tout ?a au jeu de donn?es original
-pred <- predict(model.glm, type = 'response', se = TRUE)
-data1$fit.glm <- rep(NA, nrow(data1))
-data1$fit.glm[!is.na(data1$parmaj)] <- pred$fit
-data1$sefit.glm <- rep(NA, nrow(data1))
-data1$sefit.glm[!is.na(data1$parmaj)] <- pred$se.fit
-
-# On repr?sente graphiquement les pr?dictions pour chacun des sites
-data1 %>%
-  ggplot(aes(x = as.numeric(annee), y = as.numeric(parmaj))) +
-  facet_wrap(vars(ID_PROG), scales = "free_y") +
-  geom_point(alpha = 0.25) +
-  geom_ribbon(aes(ymin = fit.glm - 2 * sefit.glm,
-                  ymax = fit.glm + 2 * sefit.glm), alpha = 0.25, fill = "red") +
-  geom_line(aes(y = fit.glm,group=1), color = "red") +
-  labs(y= "index", x="ann?e",title = 'Ajustement du mod?le Poisson avec log(muit) = alphai + betat')
