@@ -330,6 +330,48 @@ hvie <- function(data, hvie_sp) {
 #' @export
 #'
 transient <- function(data, hvie_sp) {
+  K <- 19
+  N <- nrow(hvie_sp)
+  
+  transient <- matrix(NA,N,K)
+  
+  for (i in 1:N) {
+    a <- subset(data,data$BAGUE==hvie_sp$ID[i])
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      transient[i,j] <- nrow(b)
+      rm(b)
+    }
+    rm(a)
+  }
+  
+  rm(i,j)
+  
+  # Premi?re occasion vu 1 seule fois ? = transient
+  e <- NULL
+  for (i in 1:N){
+    temp <- 1:K
+    e <- c(e,min(temp[transient[i,]>=1]))}
+  
+  # On supprime la premi?re occasion de capture sauf si il a ?t? vu deux fois
+  for(i in 1:N){
+    if(transient[i,e[i]]==1) {hvie_sp[i,e[i]]<-0}
+    if(transient[i,e[i]]>1) {next}
+  }
+  
+  return(hvie_sp)
+}
+
+
+#' Calcul transient
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+transient_new <- function(data, hvie_sp) {
 K <- 19
 N <- nrow(hvie_sp)
 
@@ -356,7 +398,10 @@ N <- nrow(hvie_sp)
   
   # On supprime la premi?re occasion de capture sauf si il a ?t? vu deux fois
   for(i in 1:N){
-    if(transient[i,e[i]]==1) {hvie_sp[i,e[i]]<-0}
+    if(transient[i,e[i]]==1) {
+      if (hvie_sp[i,e[i]]==1) {next}
+      else {hvie_sp[i,e[i]]<-0}
+    }
     if(transient[i,e[i]]>1) {next}
   }
   
@@ -493,6 +538,38 @@ cov_ind <- function(data, hvie_sp) {
     else {next}
   }
   
+  return(hvie_sp)
+}
+
+#' covariable individuelle
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+cov_ind_new <- function(data, hvie_sp) {  
+  
+  # Il nous faut le nombre de captures total (-1 pour transience)
+  # et le nombre d'annees de capture
+  # pour chaque individus des hvie
+  
+  N <- dim(hvie_sp)[1]
+  hvie_sp$nb_capt <- rep(NA,N)
+  hvie_sp$nb_years_capt <- rep(NA,N)
+  
+  for (i in 1:N) {
+    a <- subset(data, data$BAGUE==hvie_sp$ID[i])
+    hvie_sp$nb_years_capt[i] <- length(which(as.numeric(hvie_sp[i,1:K])>0))
+    if(length(unique(a$ID_PROG))==1) {
+      if(length(which(as.numeric(hvie_sp[i,1:K])==1))>0){
+        hvie_sp$nb_capt[i] <- nrow(a)}
+      else {
+      hvie_sp$nb_capt[i] <- (nrow(a)-1)
+      }
+    }
+    else {next}
+  }
   return(hvie_sp)
 }
 
