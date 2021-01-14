@@ -34,6 +34,35 @@ for (i in 1:nrow(CLC_STOC)) {
 save(CLC_STOC, file  = here::here("output","CLC_STOC.RData"))
 # write.csv(CLC_STOC,here::here("output","CLC_STOC.csv"))
 
+
+# Trouver l'habitat CLC
+
+rm(list=ls())
+
+# Packages necessaires
+devtools::install_deps(upgrade="never")
+
+# Load fonctions importantes
+devtools::load_all() 
+
+# donnees CLC
+load(here::here("output","CLC_STOC.RData"))
+
+# donnes bagueurs
+habitat_CLC_bagueur <- read.csv2(here::here('Data',"habitat_CLC_bagueur.csv")) 
+
+habitat_CLC_bagueur <- habitat_CLC_bagueur %>%
+  tibble::add_column(CLC_bagueur=stringr::str_sub(habitat_CLC_bagueur$Habitat_CLC_bagueur, start = 1, end = 3)) %>% 
+  dplyr::na_if("") %>%
+  dplyr::select(-'Habitat_CLC_bagueur')
+
+
+CLC_STOC <- Mesanges::select_habitat_STOC(CLC_STOC, habitat_CLC_bagueur)
+
+# On sauve le fichier
+save(CLC_STOC, file  = here::here("output","CLC_STOC.RData"))
+
+
 # Carte
 load(here::here("output","CLC_STOC.RData"))
 Mesanges::plot_carte_point(25, CLC_STOC, shp_CLC)

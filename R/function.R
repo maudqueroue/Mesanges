@@ -602,16 +602,18 @@ calcul_cov_ind <- function(hvie_sp) {
 #' @export
 #'
 cov_hab <- function(hvie_PROG) {
-  hab_fav <- c("111","242","311","313","322")
+  hab_fav <- c("311","313")
   S <- dim(hvie_PROG)[1]
   hvie_PROG$cov_hab <- rep(2,S)
-  hvie_PROG$cov_hab[hvie_PROG$CLC_1 %in% hab_fav] <- 1 
+  hvie_PROG$cov_hab[hvie_PROG$CLC_hab %in% hab_fav] <- 1 
   
   hvie_PROG <- hvie_PROG %>%
-    dplyr::select(!CLC_1) %>%  
-    dplyr::select(!CLC_2) %>%  
-    dplyr::select(!lat) %>%  
-    dplyr::select(!long) 
+    dplyr::select(-CLC_1) %>%  
+    dplyr::select(-CLC_2) %>%  
+    dplyr::select(-CLC_bagueur) %>% 
+    dplyr::select(-CLC_hab) %>% 
+    dplyr::select(-lat) %>%  
+    dplyr::select(-long) 
   
   return(hvie_PROG)
 }
@@ -670,4 +672,62 @@ plot_glm <- function (data, data_sp) {
                     ymax = fit.glm + 2 * sefit.glm), alpha = 0.25, fill = "red") +
     ggplot2::geom_line(ggplot2::aes(y = fit.glm,group=1), color = "red") +
     ggplot2::labs(y= "index", x="annee",title = 'Ajustement du modele Poisson')
+}
+
+
+#' Selection habitat
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+select_habitat_STOC <- function (CLC, data_bagueur) { 
+  
+  # Add CLC bagueur to CLC_STOC
+  CLC <- dplyr::left_join(CLC, data_bagueur, by = c("ID_PROG")) 
+  
+  CLC <- CLC %>%
+    tibble::add_column(CLC_hab = NA)
+  
+  
+  # Choix de l'habitat à conserver
+  
+  for (i in 1 :nrow(CLC)) {
+    
+    # Si habitat primaire forestier, on garde 
+    if(CLC$CLC_1[i] == "311" | CLC$CLC_1[i] == "312" | CLC$CLC_1[i] == "313"){
+      CLC$CLC_hab[i] <- CLC$CLC_1[i] }
+    
+    # Si l'habitat primaire n'est pas forestier, on regarde l'habitat secondaire
+    if(is.na(CLC$CLC_hab[i])==TRUE) {
+      
+      # On regarde que si l'habitat secondaire est disponible
+      if(is.na(CLC$CLC_2[i])==FALSE) {
+        
+        if(CLC$CLC_2[i] == "311" | CLC$CLC_2[i] == "312" | CLC$CLC_2[i] == "313"){
+          CLC$CLC_hab[i] <- CLC$CLC_2[i] }
+        
+      }
+      # Si l'habitat secondaire n'est pas forestier, on regarde l'habitat décrit par le bagueur 
+      if(is.na(CLC$CLC_hab[i])==TRUE) {
+        
+        # On regarde que si le bagueur a défini l'habitat de la station
+        if(is.na(CLC$CLC_bagueur[i])==FALSE) {
+          
+          if(CLC$CLC_bagueur[i] == "311" | CLC$CLC_bagueur[i] == "312" | CLC$CLC_bagueur[i] == "313"){
+            CLC$CLC_hab[i] <- CLC$CLC_bagueur[i] }
+          
+        }
+        
+        # Si aucun habitat n'est forestier, on garde l'habitat primaire
+        if(is.na(CLC$CLC_hab[i])==TRUE) {
+          CLC$CLC_hab[i] <- CLC$CLC_1[i] }
+        
+      }
+    }
+  }  
+  
+  return(CLC)
+  
 }
