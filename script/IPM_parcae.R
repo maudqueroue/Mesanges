@@ -1,6 +1,6 @@
 ##########################
 #     IPM PASSEREAUX     #
-#   Mesange Charbonniere #
+#      Mesange Bleue     #
 ##########################
 
 rm(list=ls())
@@ -12,7 +12,9 @@ library(nimble)
 #################
 #     Data      #
 #################
-setwd("~/These/MNHN/Mesanges/output")
+#setwd("~/These/MNHN/Mesanges/output")
+#setwd("~/These/MNHN/Mesanges_cluster/IPM_parcae_new")
+setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/IPM_parcae")
 
 #Histoire de vie individus
 load('hvie_parcae_tot.RData')
@@ -55,19 +57,19 @@ cov_hab <- hvie_ID_PROG_parcae$cov_hab
 
 # Log habitat
 load('index_parcae_hab1_mean.RData')
-load('index_parcae_hab1_sd.RData')
+load('index_parcae_hab1_var.RData')
 load('index_parcae_hab2_mean.RData')
-load('index_parcae_hab2_sd.RData')
+load('index_parcae_hab2_var.RData')
 
 counts <- matrix(NA,2,19)
 counts[1,2:19] <- index_parcae_hab1_mean
 counts[2,2:19] <- index_parcae_hab2_mean
 
 sd.counts <- matrix(NA,2,19) 
-sd.counts[1,2:19] <- index_parcae_hab1_sd
-sd.counts[2,2:19] <- index_parcae_hab2_sd
+sd.counts[1,2:19] <- sqrt(index_parcae_hab1_var)
+sd.counts[2,2:19] <- sqrt(index_parcae_hab2_var)
 
-rm(index_parcae_hab1_mean,index_parcae_hab1_sd,index_parcae_hab2_mean,index_parcae_hab2_sd,hvie_ID_PROG_parcae,hvie_parcae)
+rm(index_parcae_hab1_mean,index_parcae_hab1_var,index_parcae_hab2_mean,index_parcae_hab2_var,hvie_ID_PROG_parcae,hvie_parcae)
 
 
 # Compute the date of first capture for each individual:
@@ -103,11 +105,11 @@ code <- nimbleCode({
   for(h in 1:2){
     
     #Juveniles
-    nN1[h] ~ dnorm(150, sd = 20)
+    nN1[h] ~ dnorm(300, sd = 50)
     N1[h,1] <- round(nN1[h])
     
     # Adults
-    nNad[h] ~ dnorm(50, sd = 20)
+    nNad[h] ~ dnorm(115, sd = 30)
     Nad[h,1] <- round(nNad[h])
   }
   
@@ -138,9 +140,13 @@ code <- nimbleCode({
   
   for (h in 1:2) {
     for (t in 2:K) {
-      Nad[h,t] ~ dbin(n_eta.phi[h,2,t-1],round(Nad[h,t-1]+N1[h,t-1]))
+      Nad_juv[h,t] ~ dbin(n_eta.phi[h,1,t-1],round(N1[h,t-1]))
+      Nad_ad[h,t] ~ dbin(n_eta.phi[h,2,t-1],round(Nad[h,t-1]))
+      
+      Nad[h,t] <- Nad_juv[h,t] + Nad_ad[h,t]
+      
       # Jeunes
-      meanN1[h,t] <- round(Nad[h,t-1]*(fec[h,t-1]/2)*n_eta.phi[h,1,t-1])
+      meanN1[h,t] <- round(Nad[h,t-1]*(fec[h,t-1]/2))
       N1[h,t] ~ dpois(meanN1[h,t])
     }
   }
@@ -288,7 +294,7 @@ init1  <- list(z=cjs.init.z(mydata,f),
                gamma.h.phi=rnorm(2,0,1),
                gamma.u.phi=rnorm(2,0,1),
                gamma.i.p=rnorm(1,0,1),
-               Nad = matrix(rep(c(40,60), 19, each=1),2,19))
+               Nad = matrix(rep(c(70,115), 19, each=1),2,19))
 
 
 init2  <- list(z=cjs.init.z(mydata,f),
@@ -299,7 +305,7 @@ init2  <- list(z=cjs.init.z(mydata,f),
                gamma.h.phi=rnorm(2,0,1),
                gamma.u.phi=rnorm(2,0,1),
                gamma.i.p=rnorm(1,0,1),
-               Nad = matrix(rep(c(40,60), 19, each=1),2,19))
+               Nad = matrix(rep(c(70,115), 19, each=1),2,19))
 
 
 inits <- list(init1,init2)
@@ -309,7 +315,7 @@ parameters <- c("n_eta.phi","eta.phi","eta.p","sigma.phi","eps.phi",
                 "mean.phi","mu.phi",
                 "mean.p"  ,"mu.p"  ,"sigma.p" ,"eps.p",
                 "gamma.u.phi","gamma.h.phi","gamma.i.p",
-                "fec","Nad","N1", "nN1", "nNad")
+                "fec","Nad","N1", "nN1", "nNad","Nad_ad","Nad_juv")
 
 
 #################
@@ -319,7 +325,7 @@ m <- nimbleModel(code, const, data, init1, check = FALSE, calculate = FALSE)
 m$calculate()
 
 # Inits simulation
-simNodes <- c('eps.phi','eps.p',"Nad","N1","nN1","nNad","fec")
+simNodes <- c('eps.phi','eps.p',"Nad","N1","nN1","nNad","fec","Nad_ad","Nad_juv")
 
 simNodeScalar <- m$expandNodeNames(simNodes)
 
@@ -336,8 +342,8 @@ for(n in nodesSorted) {
 m$calculate()
 
 n.thin = 5
-n.burnin = 50#10000
-n.keep.exact = 100#20000
+n.burnin = 50000
+n.keep.exact = 20000
 n.keep = n.keep.exact * n.thin
 n.iter = n.burnin + n.keep
 n.chains = 2
@@ -383,7 +389,7 @@ save(out,file='out_IPM_parcae.RData')
 # library(basicMCMCplots)
 # library(boot)
 # 
-# setwd("~/These/MNHN/CMR_parcae/IPM_parcae_4")
+# setwd("~/These/MNHN/Mesanges_cluster/IPM_parcae")
 # 
 # # Data
 # load('hvie_parcae_tot.RData')
@@ -395,7 +401,7 @@ save(out,file='out_IPM_parcae.RData')
 # K <- 19
 # 
 # # output
-# load('out_IPM_parcae.RData')
+# load('out_IPM_parcae_long.RData')
 # out_mat <- as.matrix(out)
 # 
 # #########################
@@ -443,15 +449,15 @@ save(out,file='out_IPM_parcae.RData')
 # #########################
 # 
 # plot_parameters <- function(var,color,x_lab,y_lab,title) {
-#   
+# 
 #   K = K-1
-#   
+# 
 #   l_025 <- NULL
 #   l_25  <- NULL
 #   l_50  <- NULL
 #   l_75  <- NULL
 #   l_975 <- NULL
-#   
+# 
 #   for (i in 1:K){
 #     l_025[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025)))
 #     l_25[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25)))
@@ -459,24 +465,24 @@ save(out,file='out_IPM_parcae.RData')
 #     l_75[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75)))
 #     l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95)))
 #   }
-#   
-#   
+# 
+# 
 #   color.transparent <- adjustcolor(color, alpha.f = 0.4)
 #   color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
-#   
-#   
+# 
+# 
 #   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,1),ylab= y_lab,xlab=x_lab,main=title)
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_025[1:K],l_975[K:1])
 #   polygon(xx,yy,col=color.transparent_2, border=NA)
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_25[1:K],l_75[K:1])
 #   polygon(xx,yy,col=color.transparent, border=NA)
-#   
+# 
 #   lines(l_50,lwd =2, col=color)
-#   
+# 
 #   axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
 #   axis(side =2, cex.axis=1, las=2)
 # }
@@ -493,15 +499,15 @@ save(out,file='out_IPM_parcae.RData')
 # 
 # 
 # plot_states <- function(var,color,y_lim,x_lab,y_lab,title) {
-#   
+# 
 #   K = K-1
-#   
+# 
 #   l_025 <- NULL
 #   l_25  <- NULL
 #   l_50  <- NULL
 #   l_75  <- NULL
 #   l_975 <- NULL
-#   
+# 
 #   for (i in 1:K){
 #     l_025[i]   <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025))
 #     l_25[i]    <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25))
@@ -509,24 +515,24 @@ save(out,file='out_IPM_parcae.RData')
 #     l_75[i]    <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75))
 #     l_975[i]   <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95))
 #   }
-#   
-#   
+# 
+# 
 #   color.transparent <- adjustcolor(color, alpha.f = 0.4)
 #   color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
-#   
-#   
+# 
+# 
 #   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=y_lim,ylab= y_lab,xlab=x_lab,main=title)
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_025[1:K],l_975[K:1])
 #   polygon(xx,yy,col=color.transparent_2, border=NA)
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_25[1:K],l_75[K:1])
 #   polygon(xx,yy,col=color.transparent, border=NA)
-#   
+# 
 #   lines(l_50,lwd =2, col=color)
-#   
+# 
 #   axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
 #   axis(side =2, cex.axis=1, las=2)
 # }
@@ -545,15 +551,15 @@ save(out,file='out_IPM_parcae.RData')
 # # Check avec les donnees
 # 
 # check_state <- function(var,Nb,col,x_lab,y_lab,title) {
-#   
+# 
 #   K=19
-#   
+# 
 #   l_025 <- NULL
 #   l_25  <- NULL
 #   l_50  <- NULL
 #   l_75  <- NULL
 #   l_975 <- NULL
-#   
+# 
 #   for (i in 1:K){
 #     l_025[i]   <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],probs= 0.025))
 #     l_25[i]    <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],probs= 0.25))
@@ -561,21 +567,21 @@ save(out,file='out_IPM_parcae.RData')
 #     l_75[i]    <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],probs= 0.75))
 #     l_975[i]   <- as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],probs= 0.975))
 #   }
-#   
+# 
 #   color.transparent <- adjustcolor(col, alpha.f = 0.4)
 #   color.transparent_2 <- adjustcolor(col, alpha.f = 0.2)
-#   
-#   
+# 
+# 
 #   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylab= y_lab,xlab=x_lab,main=title,ylim=c(0,200))
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_025[1:K],l_975[K:1])
 #   polygon(xx,yy,col=color.transparent_2, border=NA)
-#   
+# 
 #   xx<- c(1:K,K:1)
 #   yy <- c(l_25[1:K],l_75[K:1])
 #   polygon(xx,yy,col=color.transparent, border=NA)
-#   
+# 
 #   lines(l_50,lwd =2, col=color)
 #   lines(2:K,Nb,type="l",lwd=3,lty=3, col=1)
 #   axis(1, at=c(1:K),labels=c(seq(2001,2019,1)))
@@ -590,13 +596,13 @@ save(out,file='out_IPM_parcae.RData')
 # check_state("Nad[2, ", exp(index_parcae_hab2_mean), col = color[2], x_lab="", y_lab="",title="")
 # 
 # boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
-#   
+# 
 #   l_025   <- as.numeric(quantile(var,probs= 0.025))
 #   l_10    <- as.numeric(quantile(var,probs= 0.10))
 #   l_50    <- as.numeric(quantile(var,probs= 0.50))
 #   l_90    <- as.numeric(quantile(var,probs= 0.90))
 #   l_975   <- as.numeric(quantile(var,probs= 0.975))
-#   
+# 
 #   if(ad==F){
 #     plot(c(x,x+0.4),c(l_50,l_50),type='l',axes=F,lwd =2,col="black", xlim=x_lim, ylim=y_lim, ylab=y_lab, xlab=x_lab)
 #     abline(h=0,lty=2,col="ivory3")
@@ -606,7 +612,7 @@ save(out,file='out_IPM_parcae.RData')
 #     polygon(xx,yy,col=color, border=NA)
 #     lines(c(x,x+0.4),c(l_50,l_50),lwd =2, col="black")
 #   }
-#   
+# 
 #   if(ad==T){
 #     par(new=TRUE)
 #     arrows((x+0.2),l_025,(x+0.2),l_975,length=0.06, angle=90, code=3,col="black")
@@ -615,7 +621,7 @@ save(out,file='out_IPM_parcae.RData')
 #     polygon(xx,yy,col=color, border=NA)
 #     lines(c(x,x+0.4),c(l_50,l_50),lwd =2, col="black")
 #   }
-#   
+# 
 # }
 # 
 # 
@@ -627,3 +633,4 @@ save(out,file='out_IPM_parcae.RData')
 # boxplot_maud(out_mat[,"gamma.i.p"],     5, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
 # axis(1,at=seq(1.2,5.2,1),labels=c("juv","ad","hab1","hab2","cov_ind"))
 # axis(side =2, cex.axis=1, las=2)
+# 

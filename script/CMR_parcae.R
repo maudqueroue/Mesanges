@@ -11,7 +11,7 @@ library(nimble)
 #     Data      #
 #################
 
-setwd("~/These/MNHN/Mesanges/output")
+setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_parcae")
 
 #Histoire de vie individus
 load("hvie_parcae_tot.RData")
@@ -134,14 +134,14 @@ code <- nimbleCode({
     # Recapture
     eta.p[t] <- mu.p + eps.p[t]
     # Random effect time
-    eps.p[t] ~ dnorm(0, tau.p)
+    eps.p[t] ~ dnorm(0, sd = sigma.p)
     
     for(h in 1:2){
       for (u in 1:2){
         # Survie
         eta.phi[h,u,t] <- mu.phi + gamma.h.phi[h] + gamma.u.phi[u] + eps.phi[h,u,t]
         #Random effect time
-        eps.phi[h,u,t] ~ dnorm(0, tau.phi[h,u])
+        eps.phi[h,u,t] ~ dnorm(0, sd = sigma.phi[h,u])
       }#u
     }#h
   }#t
@@ -151,11 +151,10 @@ code <- nimbleCode({
   mean.phi <- exp(mu.phi) /(1 + exp(mu.phi))
   mu.phi ~ dnorm(0,1)
   
-  # tau pour effet al?atoire temps
+  # sigma pour effet al?atoire temps
   for(u in 1:2) {
     for (h in 1:2) { 
       sigma.phi[h,u] ~ dunif(0.1,5)
-      tau.phi[h,u] <- pow(sigma.phi[h,u],-2)
     }#h
   }#u
   
@@ -164,10 +163,8 @@ code <- nimbleCode({
   mean.p <- exp(mu.p) /(1 + exp(mu.p)) 
   mu.p ~ dnorm(0,1)
   
-  # tau pour effet al?atoire temps
+  # sigma pour effet aleatoire temps
   sigma.p ~ dunif(0.1,5)
-  tau.p <- pow(sigma.p,-2)
-
   
   # Effet age et habitat
   for (v in 1:2){    
@@ -260,9 +257,9 @@ init2  <- list(z=cjs.init.z(mydata,f),
 inits <- list(init1,init2)
 
 # Specify the parameters to be monitored
-parameters <- c("eta.phi","eta.p","sigma.phi","tau.phi","eps.phi",
+parameters <- c("eta.phi","eta.p","sigma.phi","eps.phi",
                 "mean.phi","mu.phi",
-                "mean.p"  ,"mu.p"  ,"sigma.p"  ,"tau.p"  ,"eps.p",
+                "mean.p"  ,"mu.p"  ,"sigma.p" ,"eps.p",
                 "gamma.u.phi","gamma.h.phi","gamma.i.p")
 
 #################
@@ -336,8 +333,11 @@ library(nimble)
 library(basicMCMCplots)
 library(boot)
 
+# Repertoire
+setwd("~/These/MNHN/Mesanges_cluster/CMR_parcae")
+
 # Data
-load(here::here('output',"hvie_parcae_tot.RData"))
+load("hvie_parcae_tot_new.RData")
 
 # Dimension
 # Nb of individuals
@@ -346,7 +346,7 @@ N <- dim(hvie_parcae)[1]
 K <- 19
 
 # output
-load(here::here('output',"out_CMR_parcae.RData"))
+load("out_CMR_parcae_new.RData")
 out_mat <- as.matrix(out)
 
 #########################
@@ -367,8 +367,8 @@ for(v in 1:length(var)) {
 }
 
 var <- c("mean.phi","mu.phi",
-         "sigma.phi[1, 1]","sigma.phi[1, 2]","sigma.phi[2, 1]","sigma.phi[2, 2]",
-         "mean.p"  ,"mu.p"  ,"sigma.p",  
+         "sigma.phi[1, 1]", "sigma.phi[1, 2]","sigma.phi[2, 1]","sigma.phi[2, 2]",
+         "mean.p"  ,"mu.p"  ,"sigma.p",
          "gamma.u.phi[1]","gamma.u.phi[2]","gamma.h.phi[1]","gamma.h.phi[2]","gamma.i.p")
 
 gelman <- NULL
@@ -427,13 +427,13 @@ plot_parameters <- function(var,color,x_lab,y_lab,title) {
 }
 
 
-par(mfrow=c(2,3))
+par(mfrow=c(2,2))
 color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv - hab 1")
-plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad  - hab 1")
-plot_parameters("eta.phi[2, 1, ",color[3],"annees","survie","survie juv - hab 2")
-plot_parameters("eta.phi[2, 2, ",color[4],"annees","survie","survie ad - hab 2")
-plot_parameters("eta.p[","ivory4","annees","detection","detection")
+plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv")
+plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad")
+plot_parameters("eta.phi[2, 1, ",color[1],"annees","survie","survie juv")
+plot_parameters("eta.phi[2, 2, ",color[2],"annees","survie","survie ad")
+plot_parameters("eta.p[",color[3],"annees","detection","detection")
 
 boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
   
@@ -466,7 +466,6 @@ boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
 
 
 par(mfrow=c(1,1))
-
 boxplot_maud(out_mat[,"gamma.u.phi[1]"],1, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",F)
 boxplot_maud(out_mat[,"gamma.u.phi[2]"],2, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
 boxplot_maud(out_mat[,"gamma.h.phi[1]"],3, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)

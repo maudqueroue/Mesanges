@@ -13,7 +13,7 @@ library(nimble)
 #################
 
 # setwd
-setwd("~/These/MNHN/Mesanges/output")
+setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_parmaj")
 
 #Histoire de vie individus
 load("hvie_parmaj_tot.RData")
@@ -136,14 +136,14 @@ code <- nimbleCode({
     # Recapture
     eta.p[t] <- mu.p + eps.p[t]
     # Random effect time
-    eps.p[t] ~ dnorm(0, tau.p)
+    eps.p[t] ~ dnorm(0, sd = sigma.p)
     
     for(h in 1:2){
       for (u in 1:2){
         # Survie
         eta.phi[h,u,t] <- mu.phi + gamma.h.phi[h] + gamma.u.phi[u] + eps.phi[h,u,t]
         #Random effect time
-        eps.phi[h,u,t] ~ dnorm(0, tau.phi[h,u])
+        eps.phi[h,u,t] ~ dnorm(0, sd = sigma.phi[h,u])
       }#u
     }#h
   }#t
@@ -153,11 +153,10 @@ code <- nimbleCode({
   mean.phi <- exp(mu.phi) /(1 + exp(mu.phi))
   mu.phi ~ dnorm(0,1)
   
-  # tau pour effet al?atoire temps
+  # sigma pour effet al?atoire temps
   for(u in 1:2) {
     for (h in 1:2) { 
       sigma.phi[h,u] ~ dunif(0.1,5)
-      tau.phi[h,u] <- pow(sigma.phi[h,u],-2)
     }#h
   }#u
   
@@ -166,9 +165,8 @@ code <- nimbleCode({
   mean.p <- exp(mu.p) /(1 + exp(mu.p)) 
   mu.p ~ dnorm(0,1)
   
-  # tau pour effet al?atoire temps
+  # sigma pour effet al?atoire temps
   sigma.p ~ dunif(0.1,5)
-  tau.p <- pow(sigma.p,-2)
 
   
   # Effet age et habitat
@@ -262,9 +260,9 @@ init2  <- list(z=cjs.init.z(mydata,f),
 inits <- list(init1,init2)
 
 # Specify the parameters to be monitored
-parameters <- c("eta.phi","eta.p","sigma.phi","tau.phi","eps.phi",
+parameters <- c("eta.phi","eta.p","sigma.phi","eps.phi",
                 "mean.phi","mu.phi",
-                "mean.p"  ,"mu.p"  ,"sigma.p"  ,"tau.p"  ,"eps.p",
+                "mean.p"  ,"mu.p"  ,"sigma.p" ,"eps.p",
                 "gamma.u.phi","gamma.h.phi","gamma.i.p")
 
 #################
@@ -333,152 +331,114 @@ save(out,file="out_CMR_parmaj.RData")
 # # Analyse output
 # ######################################################
 
-rm(list=ls())
-dev.off()
-# package
-library(R2jags)
-library(coda)
-library(nimble)
-library(basicMCMCplots)
-library(boot)
-
-
-# Data
-load(here::here('output',"hvie_parmaj_tot.RData"))
-
-# Dimension
-# Nb of individuals
-N <- dim(hvie_parmaj)[1]
-# Nb of capture events
-K <- 19
-
-# output
-load(here::here('output',"out_CMR_parmaj.RData"))
-out_mat <- as.matrix(out)
-
-#########################
-# Test de gelman
-#########################
-
-var <- c("eta.phi[1, 1, ","eta.phi[1, 2, ","eta.phi[2, 1, ","eta.phi[2, 2, ","eps.phi[1, 1, ","eps.phi[1, 2, ","eps.phi[2, 1, ","eps.phi[2, 2, ","eta.p[","eps.p[")
-
-
-for(v in 1:length(var)) {
-  gelman <- NULL
-  for (t in 1:(K-1)) {
-    gelman[t] <-gelman.diag(out[,c(paste(var[v],t,"]", sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
-  }
-  plot(gelman,pch=19,col="indianred4",main=paste(var[v]))
-  abline(h=1.1,lty=2)
-  abline(h=1.5,lty=2,col="red")
-}
-
-var <- c("mean.phi","mu.phi",
-         "sigma.phi[1, 1]","tau.phi[1, 1]","sigma.phi[1, 2]","tau.phi[1, 2]","sigma.phi[2, 1]","tau.phi[2, 1]","sigma.phi[2, 2]","tau.phi[2, 2]",
-         "mean.p"  ,"mu.p"  ,"sigma.p",  "tau.p",
-         "gamma.u.phi[1]","gamma.u.phi[2]","gamma.h.phi[1]","gamma.h.phi[2]","gamma.i.p")
-
-gelman <- NULL
-for(v in 1:length(var)) {
-  gelman[v] <-gelman.diag(out[,c(paste(var[v], sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
-  print(paste(var[v],"  :   ",gelman[v],sep=""))
-}
-
-which(gelman > 1.03)
-for(v in (which(gelman > 1.03))) {
-  chainsPlot(out, paste(var[v], sep=""))
-  legend("topleft",legend=paste("gelman : ",round(gelman[v],4),sep=""))
-}
-
-#########################
-# Figures param?tres
-#########################
-
-plot_parameters <- function(var,color,x_lab,y_lab,title) {
-
-  K = K-1
-
-  l_025 <- NULL
-  l_25  <- NULL
-  l_50  <- NULL
-  l_75  <- NULL
-  l_975 <- NULL
-
-  for (i in 1:K){
-    l_025[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025)))
-    l_25[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25)))
-    l_50[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.5)))
-    l_75[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75)))
-    l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95)))
-  }
-
-
-  color.transparent <- adjustcolor(color, alpha.f = 0.4)
-  color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
-
-
-  plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,1),ylab= y_lab,xlab=x_lab,main=title)
-
-  xx<- c(1:K,K:1)
-  yy <- c(l_025[1:K],l_975[K:1])
-  polygon(xx,yy,col=color.transparent_2, border=NA)
-
-  xx<- c(1:K,K:1)
-  yy <- c(l_25[1:K],l_75[K:1])
-  polygon(xx,yy,col=color.transparent, border=NA)
-
-  lines(l_50,lwd =2, col=color)
-
-  axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
-  axis(side =2, cex.axis=1, las=2)
-}
-
-
-par(mfrow=c(2,3))
-color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv - hab 1")
-plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad  - hab 1")
-plot_parameters("eta.phi[2, 1, ",color[3],"annees","survie","survie juv - hab 2")
-plot_parameters("eta.phi[2, 2, ",color[4],"annees","survie","survie ad - hab 2")
-plot_parameters("eta.p[","ivory4","annees","detection","detection")
-
-boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
-
-  l_025   <- as.numeric(quantile(var,probs= 0.025))
-  l_10    <- as.numeric(quantile(var,probs= 0.10))
-  l_50    <- as.numeric(quantile(var,probs= 0.50))
-  l_90    <- as.numeric(quantile(var,probs= 0.90))
-  l_975   <- as.numeric(quantile(var,probs= 0.975))
-
-  if(ad==F){
-    plot(c(x,x+0.4),c(l_50,l_50),type='l',axes=F,lwd =2,col="black", xlim=x_lim, ylim=y_lim, ylab=y_lab, xlab=x_lab)
-    abline(h=0,lty=2,col="ivory3")
-    arrows((x+0.2),l_025,(x+0.2),l_975,length=0.06, angle=90, code=3,col="black")
-    xx<- c(x,(x+0.4),(x+0.4),x)
-    yy <- c(l_10,l_10,l_90,l_90)
-    polygon(xx,yy,col=color, border=NA)
-    lines(c(x,x+0.4),c(l_50,l_50),lwd =2, col="black")
-  }
-
-  if(ad==T){
-    par(new=TRUE)
-    arrows((x+0.2),l_025,(x+0.2),l_975,length=0.06, angle=90, code=3,col="black")
-    xx<- c(x,(x+0.4),(x+0.4),x)
-    yy <- c(l_10,l_10,l_90,l_90)
-    polygon(xx,yy,col=color, border=NA)
-    lines(c(x,x+0.4),c(l_50,l_50),lwd =2, col="black")
-  }
-
-}
-
-
-par(mfrow=c(1,1))
-
-boxplot_maud(out_mat[,"gamma.u.phi[1]"],1, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",F)
-boxplot_maud(out_mat[,"gamma.u.phi[2]"],2, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
-boxplot_maud(out_mat[,"gamma.h.phi[1]"],3, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
-boxplot_maud(out_mat[,"gamma.h.phi[2]"],4, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
-boxplot_maud(out_mat[,"gamma.i.p"],     5, color[3],x_lim=c(0,6),y_lim=c(-3,3),"Parametre demo","Effet",T)
-axis(1,at=seq(1.2,5.2,1),labels=c("juv","ad","hab1","hab2","cov_ind"))
-axis(side =2, cex.axis=1, las=2)
-
+# rm(list=ls())
+# dev.off()
+# # package
+# library(R2jags)
+# library(coda)
+# library(nimble)
+# library(basicMCMCplots)
+# library(boot)
+# 
+# # Repertoire
+# setwd("~/These/MNHN/Mesanges_cluster/CMR_parmaj")
+# 
+# # Data
+# load("hvie_parmaj_tot.RData")
+# 
+# # Dimension
+# # Nb of individuals
+# N <- dim(hvie_parmaj)[1]
+# # Nb of capture events
+# K <- 19
+# 
+# # output
+# load("out_CMR_parmaj.RData")
+# out_mat <- as.matrix(out)
+# 
+# #########################
+# # Test de gelman
+# #########################
+# 
+# var <- c("eta.phi[1, 1, ","eta.phi[1, 2, ","eta.phi[2, 1, ","eta.phi[2, 2, ","eps.phi[1, 1, ","eps.phi[1, 2, ","eps.phi[2, 1, ","eps.phi[2, 2, ","eta.p[","eps.p[")
+# 
+# 
+# for(v in 1:length(var)) {
+#   gelman <- NULL
+#   for (t in 1:(K-1)) {
+#     gelman[t] <-gelman.diag(out[,c(paste(var[v],t,"]", sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
+#   }
+#   plot(gelman,pch=19,col="indianred4",main=paste(var[v]))
+#   abline(h=1.1,lty=2)
+#   abline(h=1.5,lty=2,col="red")
+# }
+# 
+# var <- c("mean.phi","mu.phi",
+#          "sigma.phi[1, 1]","sigma.phi[1, 2]","sigma.phi[2, 1]","sigma.phi[2, 2]",
+#          "mean.p"  ,"mu.p"  ,"sigma.p", 
+#          "gamma.u.phi[1]","gamma.u.phi[2]","gamma.h.phi[1]","gamma.h.phi[2]","gamma.i.p")
+# 
+# gelman <- NULL
+# for(v in 1:length(var)) {
+#   gelman[v] <-gelman.diag(out[,c(paste(var[v], sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
+#   print(paste(var[v],"  :   ",gelman[v],sep=""))
+# }
+# 
+# which(gelman > 1.03)
+# for(v in (which(gelman > 1.03))) {
+#   chainsPlot(out, paste(var[v], sep=""))
+#   legend("topleft",legend=paste("gelman : ",round(gelman[v],4),sep=""))
+# }
+# 
+# #########################
+# # Figures param?tres
+# #########################
+# 
+# plot_parameters <- function(var,color,x_lab,y_lab,title) {
+# 
+#   K = K-1
+# 
+#   l_025 <- NULL
+#   l_25  <- NULL
+#   l_50  <- NULL
+#   l_75  <- NULL
+#   l_975 <- NULL
+# 
+#   for (i in 1:K){
+#     l_025[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025)))
+#     l_25[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25)))
+#     l_50[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.5)))
+#     l_75[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75)))
+#     l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95)))
+#   }
+# 
+# 
+#   color.transparent <- adjustcolor(color, alpha.f = 0.4)
+#   color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
+# 
+# 
+#   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,1),ylab= y_lab,xlab=x_lab,main=title)
+# 
+#   xx<- c(1:K,K:1)
+#   yy <- c(l_025[1:K],l_975[K:1])
+#   polygon(xx,yy,col=color.transparent_2, border=NA)
+# 
+#   xx<- c(1:K,K:1)
+#   yy <- c(l_25[1:K],l_75[K:1])
+#   polygon(xx,yy,col=color.transparent, border=NA)
+# 
+#   lines(l_50,lwd =2, col=color)
+# 
+#   axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
+#   axis(side =2, cex.axis=1, las=2)
+# }
+# 
+# 
+# par(mfrow=c(2,2))
+# color<-c("#FF8830","#A6B06D","#589482","#8C2423")
+# plot_parameters("eta.phi[1, 1, ",color[1],"ann?es","survie","survie juv")
+# plot_parameters("eta.phi[1, 2, ",color[2],"ann?es","survie","survie ad")
+# plot_parameters("eta.phi[2, 1, ",color[1],"ann?es","survie","survie juv")
+# plot_parameters("eta.phi[2, 2, ",color[2],"ann?es","survie","survie ad")
+# plot_parameters("eta.p[",color[3],"ann?es","detection","detection")
+# 
