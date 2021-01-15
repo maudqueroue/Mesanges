@@ -21,7 +21,7 @@ dsf_EPS <-  Mesanges::give_point(CLC_EPS)
 # Point par par station STOC
 EPS_by_STOC <- list()
 for (i in 1:nrow(CLC_STOC)) {
-  EPS_by_STOC[[i]] <- Mesanges::give_point_by_site(dsf_STOC[i,], 25, CLC_EPS)
+  EPS_by_STOC[[i]] <- Mesanges::give_point_by_site(dsf_STOC[i,], 25, CLC_EPS, dsf_EPS)
 }
 
 save(EPS_by_STOC, file  = here::here("output","EPS_by_STOC.RData"))

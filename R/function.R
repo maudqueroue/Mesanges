@@ -57,8 +57,7 @@ give_point <- function(ID) {
 #' @return 
 #' @export
 #'
-give_point_by_site <- function(dsf_STOC_i, dist_km, CLC_EPS) {
-  dsf_EPS <-  Mesanges::give_point(CLC_EPS)
+give_point_by_site <- function(dsf_STOC_i, dist_km, CLC_EPS, dsf_EPS) {
   coord_buffer_STOC <- sf::st_buffer(dsf_STOC_i, dist=units::set_units(dist_km, km))
   int <- sf::st_intersects(coord_buffer_STOC$geometry, dsf_EPS)
   pts <- CLC_EPS[int[[1]],"point"]
@@ -725,6 +724,47 @@ select_habitat_STOC <- function (CLC, data_bagueur) {
           CLC$CLC_hab[i] <- CLC$CLC_1[i] }
         
       }
+    }
+  }  
+  
+  return(CLC)
+  
+}
+
+#' Selection habitat
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+select_habitat_EPS <- function (CLC) { 
+  
+  CLC <- CLC %>%
+    tibble::add_column(CLC_hab = NA)
+  
+  # Choix de l'habitat à conserver
+  for (i in 1 :nrow(CLC)) {
+    
+    # Si habitat primaire forestier, on garde 
+    if(CLC$CLC_1[i] == "311" | CLC$CLC_1[i] == "312" | CLC$CLC_1[i] == "313"){
+      CLC$CLC_hab[i] <- CLC$CLC_1[i] }
+    
+    # Si l'habitat primaire n'est pas forestier, on regarde l'habitat secondaire
+    if(is.na(CLC$CLC_hab[i])==TRUE) {
+      
+      # On regarde que si l'habitat secondaire est disponible
+      if(is.na(CLC$CLC_2[i])==FALSE) {
+        
+        if(CLC$CLC_2[i] == "311" | CLC$CLC_2[i] == "312" | CLC$CLC_2[i] == "313"){
+          CLC$CLC_hab[i] <- CLC$CLC_2[i] }
+        
+      }
+      
+        # Si aucun habitat n'est forestier, on garde l'habitat primaire
+        if(is.na(CLC$CLC_hab[i])==TRUE) {
+          CLC$CLC_hab[i] <- CLC$CLC_1[i] }
+        
     }
   }  
   

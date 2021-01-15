@@ -32,7 +32,8 @@ load(here::here("output","EPS_by_STOC.RData"))
 
 # On lie les tables CLC_EPS et data_EPS
 EPS <- dplyr::left_join(data_EPS, CLC_EPS, by = c("point", "lat", "long")) %>%
-  dplyr::rename(CLC_EPS = 'CLC_1')  %>%
+  dplyr::rename(CLC_EPS = 'CLC_hab')  %>%
+  dplyr::select(-CLC_1) %>%
   dplyr::select(-CLC_2)
         
 # Table finale
@@ -46,7 +47,7 @@ for (i in 1:nrow(CLC_STOC)) {
   data_add <- EPS %>%
                 dplyr::filter(EPS$point %in% EPS_by_STOC[[i]]) %>%
                 tibble::add_column(ID_PROG = as.character(CLC_STOC$ID_PROG[i])) %>%
-                tibble::add_column(CLC_STOC = as.character(CLC_STOC$CLC_1[i]))
+                tibble::add_column(CLC_STOC = as.character(CLC_STOC$CLC_hab[i]))
   
   data <- dplyr::bind_rows(data, data_add)
 }
@@ -55,12 +56,13 @@ rm(data_add, EPS_by_STOC, data_EPS, CLC_EPS, CLC_STOC, EPS, i)
 
 
 # Type d habitat
-hab_fav <- c("111","242","311","313","322")
-hab_defav <- c("112", "121", "122", "123", "124", "131", "132", "133",
-               "141", "142", "211", "212", "213", "221", "222", "223", 
-               "231", "241", "243", "244", "312", "321", "323", "324",
-               "331", "332", "333", "334", "335", "411", "412", "421",
-               "422", "423", "511", "512", "521", "522", "523")
+hab_fav <- c("311","313")
+hab_defav <- c("111","112", "121", "122", "123", "124", "131", "132", 
+               "133","141", "142", "211", "212", "213", "221", "222", 
+               "223", "231", "241", "242", "243", "244", "312", "321", 
+               "322", "323", "324", "331", "332", "333", "334", "335", 
+               "411", "412", "421", "422", "423", "511", "512", "521", 
+               "522", "523")
 
 
 # Avec les donnees de PARMAJ
@@ -196,6 +198,7 @@ data_2 <- data_parcae_2 %>%
 
 # Nom des stations concernees
 ID_PROG_supr <- data_2$ID_PROG[which(data_2$n < 10)]
+ID_PROG_supr <- c(ID_PROG_supr, "56","92")
 
 # On supprime ces stations
 data_parcae_2 <- data_parcae_2 %>%

@@ -36,11 +36,35 @@ for (i in 1:5){#nrow(CLC_EPS)) {
 
 save(CLC_EPS, file  = here::here("output","CLC_EPS.RData"))
 
+
+# Récupération de l'habitat
+rm(list=ls())
+
+# Packages necessaires
+devtools::install_deps(upgrade="never")
+
+# Load fonctions importantes
+devtools::load_all() 
+
+load(here::here("output","CLC_EPS.RData"))
+
+CLC_EPS <- Mesanges::select_habitat_EPS(CLC_EPS)
+
+
+save(CLC_EPS, file  = here::here("output","CLC_EPS.RData"))
+
 # Carte
 load(here::here("output","CLC_EPS.RData"))
 Mesanges::plot_carte_point(379, CLC_EPS, shp_CLC)
 
-#########################
+
+
+
+
+
+
+
+##############################
 ##############################
 # Analyse effet habitat
 # Type d'habitat pour chaque station EPS
