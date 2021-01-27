@@ -86,19 +86,8 @@ rm(hvie_ID_PROG_parmaj, ID_PROG_parmaj)
 data_parmaj_1 <- data_parmaj %>%
   dplyr::filter(data_parmaj$CLC_STOC %in% hab_fav & data_parmaj$CLC_EPS %in% hab_fav)  
 
-# Quelle station n ont pas assez de points ?
-data_1 <- data_parmaj_1 %>%
-  dplyr::group_by(ID_PROG) %>%
-  dplyr::count()
-
-# Nom des stations concernees
-ID_PROG_supr <- data_1$ID_PROG[which(data_1$n < 10)]
-
-# On supprime ces stations
-data_parmaj_1 <- data_parmaj_1 %>%
-  dplyr::filter(!(data_parmaj_1$ID_PROG %in% ID_PROG_supr))
-
-rm(data_1, ID_PROG_supr)
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_parmaj_1 <- Mesanges::supr_point(data_parmaj_1, "PARMAJ")
 
 # Calcul de l'index
 index_parmaj_hab1_mean <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[1]]
@@ -115,19 +104,8 @@ Mesanges::plot_index(index_parmaj_hab1_mean, sqrt(index_parmaj_hab1_var), color[
 data_parmaj_2 <- data_parmaj %>%
   dplyr::filter(data_parmaj$CLC_STOC %in% hab_defav & data_parmaj$CLC_EPS %in% hab_defav)  
 
-# Quelle station n ont pas assez de points ?
-  data_2 <- data_parmaj_2 %>%
-  dplyr::group_by(ID_PROG) %>%
-  dplyr::count()
-
-# Nom des stations concernees
-ID_PROG_supr <- data_2$ID_PROG[which(data_2$n < 10)]
-
-# On supprime ces stations
-data_parmaj_2 <- data_parmaj_2 %>%
-  dplyr::filter(!(data_parmaj_2$ID_PROG %in% ID_PROG_supr))
-
-rm(data_2, ID_PROG_supr)
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_parmaj_2 <- Mesanges::supr_point(data_parmaj_2, "PARMAJ")
 
 # Calcul de l'index
 index_parmaj_hab2_mean <- Mesanges::index(data_parmaj_2, data_parmaj_2$PARMAJ)[[1]]
@@ -162,23 +140,13 @@ rm(hvie_ID_PROG_parcae, ID_PROG_parcae,data)
 data_parcae_1 <- data_parcae %>%
   dplyr::filter(data_parcae$CLC_STOC %in% hab_fav & data_parcae$CLC_EPS %in% hab_fav)  
 
-# Quelle station n ont pas assez de points ?
-data_1 <- data_parcae_1 %>%
-  dplyr::group_by(ID_PROG) %>%
-  dplyr::count()
-
-# Nom des stations concernees
-ID_PROG_supr <- data_1$ID_PROG[which(data_1$n < 10)]
-
-# On supprime ces stations
-data_parcae_1 <- data_parcae_1 %>%
-  dplyr::filter(!(data_parcae_1$ID_PROG %in% ID_PROG_supr))
-
-rm(data_1, ID_PROG_supr)
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_parcae_1 <- Mesanges::supr_point(data_parcae_1, "PARCAE")
 
 # Calcul de l'index
 index_parcae_hab1_mean <- Mesanges::index(data_parcae_1, data_parcae_1$PARCAE)[[1]]
 index_parcae_hab1_var <- Mesanges::index(data_parcae_1, data_parcae_1$PARCAE)[[2]]
+
 # save 
 save(index_parcae_hab1_mean, file  = here::here("output","index_parcae_hab1_mean.RData"))
 save(index_parcae_hab1_var, file  = here::here("output","index_parcae_hab1_var.RData"))
@@ -191,20 +159,8 @@ Mesanges::plot_index(index_parcae_hab1_mean, sqrt(index_parcae_hab1_var), color[
 data_parcae_2 <- data_parcae %>%
   dplyr::filter(data_parcae$CLC_STOC %in% hab_defav & data_parcae$CLC_EPS %in% hab_defav)  
 
-# Quelle station n ont pas assez de points ?
-data_2 <- data_parcae_2 %>%
-  dplyr::group_by(ID_PROG) %>%
-  dplyr::count()
-
-# Nom des stations concernees
-ID_PROG_supr <- data_2$ID_PROG[which(data_2$n < 10)]
-ID_PROG_supr <- c(ID_PROG_supr, "56","92")
-
-# On supprime ces stations
-data_parcae_2 <- data_parcae_2 %>%
-  dplyr::filter(!(data_parcae_2$ID_PROG %in% ID_PROG_supr))
-
-rm(data_2, ID_PROG_supr)
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_parcae_2 <- Mesanges::supr_point(data_parcae_2, "PARCAE")
 
 # Calcul de l'index
 index_parcae_hab2_mean <- Mesanges::index(data_parcae_2, data_parcae_2$PARCAE)[[1]]

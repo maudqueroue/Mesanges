@@ -771,3 +771,39 @@ select_habitat_EPS <- function (CLC) {
   return(CLC)
   
 }
+
+
+
+#' Supprimer les point qui n'ont jamais contacte l'espece
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+supr_point <- function (data, sp) {
+  
+  if(sp =="PARMAJ") {
+  # Quels point n ont jamais contacte l'sp ?
+  sum_sp_point <- data %>%
+    dplyr::group_by(point) %>%
+    dplyr::summarise(n= sum(PARMAJ))
+  }
+  
+  if(sp =="PARCAE") {
+    # Quels point n ont jamais contacte l'sp ?
+    sum_sp_point <- data %>%
+      dplyr::group_by(point) %>%
+      dplyr::summarise(n= sum(PARCAE))
+  }
+  
+  # Nom des stations concernees
+  point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
+  
+  # On supprime ces points
+  data <- data %>%
+    dplyr::filter(!(data$point %in% point_supr))
+
+  return(data)
+  
+  }  
