@@ -266,6 +266,7 @@ data$new_AGE[which(data$AGE=="2A")] <- "A"
 data$new_AGE[which(data$AGE=="2A?")]<- "A"
 data$new_AGE[which(data$AGE=="+2A")]<- "A"
 data$new_AGE[which(data$AGE=="+2?")]<- "A"
+data$new_AGE[which(data$AGE=="3A")] <- "A"
 data$new_AGE[which(data$AGE=="+3A")]<- "A"
 data$new_AGE[which(data$AGE=="4A")] <- "A"
 data$new_AGE[which(data$AGE=="+4A")]<- "A"
@@ -395,7 +396,8 @@ N <- nrow(hvie_sp)
     temp <- 1:K
     e <- c(e,min(temp[transient[i,]>=1]))}
   
-  # On supprime la premi?re occasion de capture sauf si il a ?t? vu deux fois
+  # On supprime la première occasion de capture sauf si il a ete vu deux fois
+  # sauf si il est transient 
   for(i in 1:N){
     if(transient[i,e[i]]==1) {
       if (hvie_sp[i,e[i]]==1) {next}
@@ -407,7 +409,98 @@ N <- nrow(hvie_sp)
   return(hvie_sp)
 }
 
-
+#' Calcul transient
+#'
+#' @param  data, hvie_sp  
+#'
+#' @return 
+#' @export
+#'
+transient_tt <- function(data, hvie_sp) {
+  
+  K <- 19
+  N <- nrow(hvie_sp)
+  
+  # calcul nombre de captures
+  transient <- matrix(NA,N,K)
+  
+  for (i in 1:N) {
+    a <- subset(data,data$BAGUE==hvie_sp$ID[i] & data$ID_PROG==hvie_sp$ID_PROG[i])
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      transient[i,j] <- nrow(b)
+      rm(b)
+    }
+    rm(a)
+  }
+  
+  rm(i,j)
+  
+  
+  # calcul des nb de captures
+  juv <- NULL
+  ad <- NULL
+  ad_juv <- NULL
+  
+  for(i in 1:N){
+    
+    juv[i] <- length(which(hvie_sp[i,1:K]==1))
+    ad[i] <- length(which(hvie_sp[i,1:K]==2))
+    
+    if(ad[i]>0 & juv[i]>0){ad_juv[i] <- 1 }
+    else{ad_juv[i] <- 0}
+  }
+  
+  
+  # Première occasion de capture adulte 
+  e <- NULL
+  e_ad <- NULL
+  e_juv <- NULL
+  
+  for (i in 1:N){
+    temp <- 1:K
+    e <- c(e,min(temp[hvie_sp[i,1:K]>=1]))
+    e_ad <- c(e_ad,min(temp[hvie_sp[i,1:K]==2]))
+    e_juv <- c(e_juv,min(temp[hvie_sp[i,1:K]==1]))}
+  
+  # Gestion transients  
+  for (i in 1:N){
+    if(ad_juv[i] == 0) {  
+      if(transient[i,e[i]]==1) {
+        if (hvie_sp[i,e[i]]==1) {next}
+        else {hvie_sp[i,e[i]]<-0}
+      }
+      
+      if(transient[i,e[i]]>1) {next}
+    }
+    
+    if(ad_juv[i] == 1) {
+      
+      hvie_new <- hvie_sp[i,]
+      hvie_new$censure <- -1
+      
+      hvie_sp[i,e_juv[i]] <- 0
+      
+      if(e_ad[i] < 19) {  
+        hvie_new[,(e_ad[i]+1):19] <- rep(0,(19-e_ad[i]))
+      }
+      
+      if(e_ad[i] == 19) {hvie_new <- hvie_new}
+      
+      hvie_sp <- rbind(hvie_sp, hvie_new)
+      rm(hvie_new)
+      
+    }
+  }
+  
+  for(i in which(ad_juv==1)){
+    if(transient[i,e_ad[i]]==1) {hvie_sp[i,e_ad[i]]<-0}
+    if(transient[i,e_ad[i]]>1) {next}
+  }
+  
+  return(hvie_sp)    
+}  
 #' Suppression individu hvie = 0
 #'
 #' @param  data  
@@ -431,6 +524,40 @@ hvie_sp <- hvie_sp %>%
   dplyr::select(!sum_hvie)
 
 return(hvie_sp)
+}
+
+
+#' forcement adulte apres premiere occasion de capture
+#'
+#' @param  hvie_sp 
+#'
+#' @return 
+#' @export
+#'
+check_age<- function(hvie_sp) {
+  K <- 19
+  e <- NULL
+  N <- nrow(hvie_sp)
+  
+  for (i in 1:N){
+    temp <- 1:K
+    e <- c(e,min(temp[hvie_sp[i,1:K]>=1]))
+  }
+  
+  for (i in 1:N){ 
+    
+    if(e[i] < 19){
+      for (j in (e[i]+1):K){
+        if (hvie_sp[i,j] == 1) {hvie_sp[i,j] <- 2}
+        if (hvie_sp[i,j] == 3) {hvie_sp[i,j] <- 2}
+        if (hvie_sp[i,j] == 4) {hvie_sp[i,j] <- 2}
+        if (hvie_sp[i,j] == 2) {next} 
+        if (hvie_sp[i,j] == 0) {next}
+      }
+    }
+    if(e[i]==19) {next}
+  }
+  return(hvie_sp)
 }
 
 
@@ -473,12 +600,9 @@ check_4 <- function(data, hvie_sp, check) {
     colonne <- ceiling(check[i]/N)
     bague <- hvie_sp$ID[ligne]
     a <- subset(data,data$BAGUE==bague)
-    if(length(unique(substr(a$DATE,7,10)))==1){
-      b <- subset(a, a$ACTION=="B")
-      if(nrow(b)>0) {hvie_sp[ligne,colonne] <-b$new_AGE[1]}
-      else {next}
-    }
-    else{next}
+    b <- subset(a, a$ACTION=="B")
+    if(nrow(b)>0) {hvie_sp[ligne,colonne] <-b$new_AGE[1]}
+    else {next}
     rm(ligne, colonne, bague, a, b)
   }
   return(hvie_sp)  
@@ -568,6 +692,55 @@ cov_ind_new <- function(data, hvie_sp) {
       }
     }
     else {next}
+  }
+  return(hvie_sp)
+}
+
+#' covariable individuelle
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+cov_ind_tt <- function(data, hvie_sp) {  
+  
+  # Il nous faut le nombre de captures total (-1 pour transience si premiere capt adulte)
+  # et le nombre d'annees de capture pour chaque individus des hvie
+  
+  N <- dim(hvie_sp)[1]
+  K <- 19
+  hvie_sp$nb_capt <- rep(NA,N)
+  hvie_sp$nb_years_capt <- rep(NA,N)
+  
+  # calcul nombre de captures
+  nb_capt <- matrix(NA,N,K)
+  
+  for (i in 1:N) {
+    a <- subset(data,data$BAGUE==hvie_sp$ID[i] & data$ID_PROG==hvie_sp$ID_PROG[i])
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      nb_capt[i,j] <- nrow(b)
+      rm(b)
+    }
+    rm(a)
+  }
+  
+  rm(i,j)
+  
+  e <- NULL
+  for (i in 1:N){
+    temp <- 1:K
+    e <- c(e,min(temp[hvie_sp[i,1:K]>=1]))
+  }
+  
+  for (i in 1:N) {
+    hvie_sp$nb_years_capt[i] <- length(which(as.numeric(hvie_sp[i,1:K])>0))
+    if(hvie_sp[i,e[i]]==2 & nb_capt[i,e[i]]>1){
+      hvie_sp$nb_capt[i] <- sum(nb_capt[i,which(as.numeric(hvie_sp[i,1:K])>0)])-1}
+    else{
+    hvie_sp$nb_capt[i] <- sum(nb_capt[i,which(as.numeric(hvie_sp[i,1:K])>0)])}
   }
   return(hvie_sp)
 }
@@ -806,4 +979,83 @@ supr_point <- function (data, sp) {
 
   return(data)
   
-  }  
+}  
+
+#' Nouvelles histoires de capture
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+hvie_tt <- function(data, hvie_sp) {
+  
+  K <- 19
+  N <- nrow(hvie_sp)
+  hvie_sp <- hvie_sp %>%
+    tibble::add_column(censure = 1) %>%
+    tibble::add_column(ID_PROG = NA)
+  
+  
+  for (i in 1:N) {
+    data_ind <- subset(data,data$BAGUE==hvie_sp$ID[i])
+    nb_site <- unique(data_ind$ID_PROG)
+    
+    a <- subset(data_ind,data_ind$ID_PROG==nb_site[1])
+    hvie_sp$ID_PROG[i] <- nb_site[1]
+    
+    for (j in 1:K) {
+      b <- subset(a,substr(a$DATE,7,10)==years[j])
+      
+      if (nrow(b)==0) {hvie_sp[i,j] <- 0}
+      if (nrow(b)==1) {hvie_sp[i,j] <- b$new_AGE[1]}
+      if (nrow(b)>1)  {
+        
+        c <- unique(b$new_AGE)
+        
+        if(length(which(c=="A"))>0  & length(which(c=="P"))>0 ) {hvie_sp[i,j]  <- "AP"}
+        if(length(which(c=="A"))>0  & length(which(c=="P"))==0) {hvie_sp[i,j]  <- "A"  }
+        if(length(which(c=="A"))==0 & length(which(c=="P"))>0 ) {hvie_sp[i,j]  <- "P"  }
+        if(length(which(c=="A"))==0 & length(which(c=="P"))==0 ){hvie_sp[i,j]  <- "C"  }
+        
+        rm(c)
+      }
+      rm(b)
+    }
+    rm(a)
+    
+    if (length(nb_site)>1) {
+      
+      for (s in 2:length(nb_site)) {
+        
+        hvie_new <- c(rep(0,K),data_ind$BAGUE[1],1,nb_site[s]) 
+        a <- subset(data_ind,data_ind$ID_PROG==nb_site[s])
+        
+        for (j in 1:K) {
+          b <- subset(a,substr(a$DATE,7,10)==years[j])
+          
+          if (nrow(b)==0) {hvie_new[j] <- 0}
+          if (nrow(b)==1) {hvie_new[j] <- b$new_AGE[1]}
+          if (nrow(b)>1)  {
+            
+            c <- unique(b$new_AGE)
+            
+            if(length(which(c=="A"))>0  & length(which(c=="P"))>0 ) {hvie_new[j]  <- "AP"}
+            if(length(which(c=="A"))>0  & length(which(c=="P"))==0) {hvie_new[j]  <- "A" }
+            if(length(which(c=="A"))==0 & length(which(c=="P"))>0 ) {hvie_new[j]  <- "P" }
+            if(length(which(c=="A"))==0 & length(which(c=="P"))==0 ){hvie_new[j]  <- "C" }
+            rm(c)
+          }
+          rm(b)
+        }
+        rm(a)
+        
+        hvie_sp <- rbind(hvie_sp, hvie_new)
+        rm(hvie_new)
+      }
+    }
+  }
+  
+  return(hvie_sp)
+  
+}

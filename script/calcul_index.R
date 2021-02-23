@@ -97,6 +97,7 @@ index_parmaj_hab1_var <- Mesanges::index(data_parmaj_1, data_parmaj_1$PARMAJ)[[2
 save(index_parmaj_hab1_mean, file  = here::here("output","index_parmaj_hab1_mean.RData"))
 save(index_parmaj_hab1_var, file  = here::here("output","index_parmaj_hab1_var.RData"))
 
+par(mfrow=c(2,2))
 # Plot index
 Mesanges::plot_index(index_parmaj_hab1_mean, sqrt(index_parmaj_hab1_var), color[3], "parmaj", "favorable" )
 
