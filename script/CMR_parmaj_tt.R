@@ -11,18 +11,19 @@ library(nimble)
 #     Data      #
 #################
 
-setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_parcae")
+#setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_parmaj")
+setwd("~/These/MNHN/Mesanges/output")
 
 #Histoire de vie individus
-load("hvie_parcae_tot.RData")
+load("hvie_parmaj_tot_tt.RData")
 
 # Histoire de vie des sites
-load("hvie_ID_PROG_parcae_tot.RData")
+load("hvie_ID_PROG_parmaj_tot_tt.RData")
 
 # Nb ind
-N <- dim(hvie_parcae)[1]
+N <- dim(hvie_parmaj)[1]
 # Nb site
-S <- dim(hvie_ID_PROG_parcae)[1]
+S <- dim(hvie_ID_PROG_parmaj)[1]
 # Nb years
 K <- 19
 
@@ -31,25 +32,23 @@ K <- 19
 #############################
 
 # # Combien de sites garder ?
-# nsites <- 50
-# 
-# #On choisi al?atoirement n sites
-# ID <- sort(sample(seq(1,S,1),nsites))
-# 
-# #On garde  que les sites s?lectionn?s
-# hvie_ID_PROG_parcae <- hvie_ID_PROG_parcae[ID,]
-# S <- dim(hvie_ID_PROG_parcae)[1]
-# 
-# #On garde que les individus des sites s?lectionn?es
-# hvie_to_keep <- which((hvie_parcae$vector_ID_PROG_parcae %in% ID)==TRUE)
-# hvie_parcae <- hvie_parcae[hvie_to_keep,]
-# N <- dim(hvie_parcae)[1]
-# 
-# for(i in 1:N){
-#   hvie_parcae$vector_ID_PROG_parcae[i] <- which(hvie_ID_PROG_parcae$ID_PROG==hvie_parcae$ID_PROG[i])
-# }
-# 
-# rm(hvie_to_keep,nsites,ID)
+nsites <- 50
+
+#On choisi aleatoirement n sites
+ID <- sort(sample(seq(1,S,1),nsites))
+
+#On garde  que les sites selectionnes
+hvie_ID_PROG_parmaj <- hvie_ID_PROG_parmaj[ID,]
+S <- dim(hvie_ID_PROG_parmaj)[1]
+
+#On garde que les individus des sites selectionnes
+hvie_to_keep <- which((hvie_parmaj$vector_ID_PROG %in% ID)==TRUE)
+hvie_parmaj <- hvie_parmaj[hvie_to_keep,]
+N <- dim(hvie_parmaj)[1]
+
+for(i in 1:N){
+  hvie_parmaj$vector_ID_PROG[i] <- which(hvie_ID_PROG_parmaj$ID_PROG==hvie_parmaj$ID_PROG[i])
+}
 
 ##############################
 ##############################
@@ -57,30 +56,30 @@ K <- 19
 # Les histoires de vie sont 1=juvenile, 2=adulte, 0= pas vu  
 
 # On cr?e x la matrice des covariables pour l'?ge 
-cov_age <- as.matrix(hvie_parcae[,1:K])
+cov_age <- as.matrix(hvie_parmaj[,1:K])
 cov_age <- apply(cov_age,2,as.numeric)
 
 # On remplace par un tous les 1 et 2 pour former les donn?es en 0 et 1
-mydata <- as.matrix(hvie_parcae[,1:K])
+mydata <- as.matrix(hvie_parmaj[,1:K])
 mydata <- apply(mydata,2,as.numeric)
 mydata[which(mydata>0)] <- 1
 
 # Vecteur donnant le site dans lequel a ?t? captur? chaque m?sange 
-ind_site <- hvie_parcae$vector_ID_PROG
+ind_site <- hvie_parmaj$vector_ID_PROG
 
 #vecteur covariable individuelle recpature 
-cov_ind <- hvie_parcae$cov_ind
+cov_ind <- hvie_parmaj$cov_ind
 
 # On remplace les histoires de vies des sites (nombre de captures secondaires par an) par des 1
 # quand le site est actif, sinon ce sont des 0.
 
-hvie_site <- as.matrix(hvie_ID_PROG_parcae[1:K])
+hvie_site <- as.matrix(hvie_ID_PROG_parmaj[1:K])
 hvie_site[which(hvie_site>0)] <- 1
 
 # Covariable habitat
-cov_hab <- hvie_ID_PROG_parcae$cov_hab
+cov_hab <- hvie_ID_PROG_parmaj$cov_hab
 
-rm(hvie_ID_PROG_parcae,hvie_parcae,K,N,S)
+#rm(hvie_ID_PROG_parmaj,hvie_parmaj,K,N,S)
 
 
 #################
@@ -99,15 +98,28 @@ for (i in 1:N){
   temp <- 1:K
   f <- c(f,min(temp[mydata[i,]==1]))}
 
+# Compute the last date of capture for each individual with censure:
+l <- NULL
+for (i in 1:N){
+  temp <- 1:K
+  if (hvie_parmaj$censure[i]==1){l_new <- K}
+  else {l_new <- max(temp[mydata[i,]==1])}
+  l <- c(l,l_new)
+  rm(l_new)}
+
+
 # On remplace les 0 dans la covariables ?ge : un individu ne peut ?tre juv?nile que la premi?re ann?e
 # Donc apr?s la premi?re occasion de capture f, on a forcement que des 2. 
 
 for (i in 1:N){
   for(j in 1:K){
-    if (j > f[i]) {cov_age[i,j] <- 2}
+    if (j > f[i] & j<=l[i]) {cov_age[i,j] <- 2}
     else{next}
   }
 }
+cov_age[which(cov_age==0)] <- NA
+
+rm(i,j,temp,S,nsites,ID,hvie_to_keep,hvie_ID_PROG_parmaj,hvie_parmaj)
 
 #################
 #     Model     #
@@ -115,17 +127,19 @@ for (i in 1:N){
 
 code <- nimbleCode({
   
-  ##### Priors and constraints ##### 
+  ########################## 
+  # PART CAPTURE RECAPTURE #
+  ########################## 
   
   # Calcul survie/recapture selon individu
   
   for (i in 1:N){
-    for (t in f[i]:(K-1)){ 
+    for (t in f[i]:(l[i]-1)){ 
       # Survie
-      phi[i,t] <-  (1 / (1 + exp(-eta.phi[cov_hab[ind_site[i]],cov_age[i,t],t])))
+      logit(phi[i,t]) <- eta.phi[cov_hab[ind_site[i]],cov_age[i,t],t]
       # Recapture
       p[i,t]   <-  1 / (1 + exp(-(eta.p[t] + gamma.i.p * cov_ind[i]))) * (1-step(-hvie_site[ind_site[i],(t+1)])) 
-          } #t
+    } #t
   } #i 
   
   
@@ -151,7 +165,7 @@ code <- nimbleCode({
   mean.phi <- exp(mu.phi) /(1 + exp(mu.phi))
   mu.phi ~ dnorm(0,1)
   
-  # sigma pour effet al?atoire temps
+  # sd pour effet aleatoire temps
   for(u in 1:2) {
     for (h in 1:2) { 
       sigma.phi[h,u] ~ dunif(0.1,5)
@@ -163,14 +177,15 @@ code <- nimbleCode({
   mean.p <- exp(mu.p) /(1 + exp(mu.p)) 
   mu.p ~ dnorm(0,1)
   
-  # sigma pour effet aleatoire temps
+  # sd pour effet aleatoire temps
   sigma.p ~ dunif(0.1,5)
   
   # Effet age et habitat
-  for (v in 1:2){    
-    gamma.u.phi[v] ~  dnorm(0,1)
-    gamma.h.phi[v] ~  dnorm(0,1)
-  }#v
+  gamma.u.phi[1] <- 0
+  gamma.h.phi[1] <- 0
+  gamma.u.phi[2] ~  dnorm(0,1)
+  gamma.h.phi[2] ~  dnorm(0,1)
+  
   
   # Effet cov ind
   gamma.i.p   ~  dnorm(0,1)
@@ -179,7 +194,7 @@ code <- nimbleCode({
   for (i in 1:N) {
     # Define latent state at first capture 
     z[i,f[i]] <- 1
-    for (t in (f[i]+1):K){ 
+    for (t in (f[i]+1):l[i]){ 
       # State process
       z[i,t] ~ dbern(mu1[i,t]) 
       mu1[i,t] <- phi[i,t-1] * z[i,t-1] 
@@ -211,6 +226,7 @@ known.state.cjs <- function(ch){
 const = list(N=N,
              K=K,
              f=f,
+             l=l,
              hvie_site=hvie_site,
              ind_site = ind_site,
              cov_age=cov_age,
@@ -241,8 +257,8 @@ init1  <- list(z=cjs.init.z(mydata,f),
                mu.p=rnorm(1,0,1),
                sigma.phi=matrix(runif(4,0.1,5),2,2),
                sigma.p=runif(1,0.1,5),
-               gamma.h.phi=rnorm(2,0,1),
-               gamma.u.phi=rnorm(2,0,1),
+               gamma.h.phi=c(NA,0),
+               gamma.u.phi=c(NA,0),
                gamma.i.p=rnorm(1,0,1))
 
 init2  <- list(z=cjs.init.z(mydata,f),
@@ -250,8 +266,8 @@ init2  <- list(z=cjs.init.z(mydata,f),
                mu.p=rnorm(1,0,1),
                sigma.phi=matrix(runif(4,0.1,5),2,2),
                sigma.p=runif(1,0.1,5),
-               gamma.h.phi=rnorm(2,0,1),
-               gamma.u.phi=rnorm(2,0,1),
+               gamma.h.phi=c(NA,0),
+               gamma.u.phi=c(NA,0),
                gamma.i.p=rnorm(1,0,1))
 
 inits <- list(init1,init2)
@@ -287,8 +303,8 @@ for(n in nodesSorted) {
 m$calculate()
 
 n.thin = 5
-n.burnin = 5000
-n.keep.exact = 10000
+n.burnin = 2000
+n.keep.exact = 1000
 n.keep = n.keep.exact * n.thin
 n.iter = n.burnin + n.keep
 n.chains = 2
@@ -317,7 +333,7 @@ out <- runMCMC(Cmcmc,
                summary = FALSE, 
                samplesAsCodaMCMC = TRUE) 
 
-save(out,file="out_CMR_parcae.RData")
+save(out,file="out_CMR_parmaj.RData")
 
 
 # ######################################################
@@ -334,19 +350,19 @@ library(basicMCMCplots)
 library(boot)
 
 # Repertoire
-setwd("~/These/MNHN/Mesanges_cluster/CMR_parcae")
+setwd("~/These/MNHN/Mesanges_cluster/CMR_parmaj")
 
 # Data
-load("hvie_parcae_tot_new.RData")
+load("hvie_parmaj_tot_new.RData")
 
 # Dimension
 # Nb of individuals
-N <- dim(hvie_parcae)[1]
+N <- dim(hvie_parmaj)[1]
 # Nb of capture events
 K <- 19
 
 # output
-load("out_CMR_parcae_new.RData")
+load("out_CMR_parmaj_new.RData")
 out_mat <- as.matrix(out)
 
 #########################
@@ -374,54 +390,51 @@ var <- c("mean.phi","mu.phi",
 gelman <- NULL
 for(v in 1:length(var)) {
   gelman[v] <-gelman.diag(out[,c(paste(var[v], sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
+  chainsPlot(out, paste(var[v], sep=""))
   print(paste(var[v],"  :   ",gelman[v],sep=""))
 }
 
-which(gelman > 1.03)
-for(v in (which(gelman > 1.03))) {
-  chainsPlot(out, paste(var[v], sep=""))
-  legend("topleft",legend=paste("gelman : ",round(gelman[v],4),sep=""))
-}
+
 
 #########################
-# Figures param?tres
+# Figures parametres
 #########################
 
 plot_parameters <- function(var,color,x_lab,y_lab,title) {
-
+  
   K = K-1
-
+  
   l_025 <- NULL
   l_25  <- NULL
   l_50  <- NULL
   l_75  <- NULL
   l_975 <- NULL
-
+  
   for (i in 1:K){
     l_025[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025)))
     l_25[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25)))
     l_50[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.5)))
     l_75[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75)))
-    l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95)))
+    l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.975)))
   }
-
-
+  
+  
   color.transparent <- adjustcolor(color, alpha.f = 0.4)
   color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
-
-
+  
+  
   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,1),ylab= y_lab,xlab=x_lab,main=title)
-
+  
   xx<- c(1:K,K:1)
   yy <- c(l_025[1:K],l_975[K:1])
   polygon(xx,yy,col=color.transparent_2, border=NA)
-
+  
   xx<- c(1:K,K:1)
   yy <- c(l_25[1:K],l_75[K:1])
   polygon(xx,yy,col=color.transparent, border=NA)
-
+  
   lines(l_50,lwd =2, col=color)
-
+  
   axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
   axis(side =2, cex.axis=1, las=2)
 }
@@ -429,11 +442,13 @@ plot_parameters <- function(var,color,x_lab,y_lab,title) {
 
 par(mfrow=c(2,2))
 color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv")
-plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad")
-plot_parameters("eta.phi[2, 1, ",color[1],"annees","survie","survie juv")
-plot_parameters("eta.phi[2, 2, ",color[2],"annees","survie","survie ad")
-plot_parameters("eta.p[",color[3],"annees","detection","detection")
+plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv - hab 1")
+plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad - hab 1")
+plot_parameters("eta.phi[2, 1, ",color[3],"annees","survie","survie juv - hab 2")
+plot_parameters("eta.phi[2, 2, ",color[4],"annees","survie","survie ad - hab 2")
+
+par(mfrow=c(1,1))
+plot_parameters("eta.p[","ivory4","annees","detection","detection")
 
 boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
   

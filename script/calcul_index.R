@@ -68,7 +68,7 @@ hab_defav <- c("111","112", "121", "122", "123", "124", "131", "132",
 # Avec les donnees de PARMAJ
 #############################
 
-load(here::here("output","hvie_ID_PROG_parmaj_tot.RData"))
+load(here::here("output","hvie_ID_PROG_parmaj_tot_tt.RData"))
 ID_PROG_parmaj <- hvie_ID_PROG_parmaj$ID_PROG
 # On ne garde que les sites utilises dans les donnees parmaj
 data_parmaj <- data %>%
@@ -124,12 +124,12 @@ rm(data_parmaj)
 
 # Avec les donnees de PARCAE
 #############################
-load(here::here('output',"hvie_ID_PROG_parcae_tot.RData"))
+load(here::here('output',"hvie_ID_PROG_parcae_tot_tt.RData"))
 ID_PROG_parcae <- hvie_ID_PROG_parcae$ID_PROG
 # On ne garde que les sites utilis?s dans les donn?es parmaj
 data_parcae <- data %>%
   dplyr::filter(data$ID_PROG %in% ID_PROG_parcae)
-rm(hvie_ID_PROG_parcae, ID_PROG_parcae,data)
+rm(hvie_ID_PROG_parcae, ID_PROG_parcae)
 
 # On retrie selon le type d'habitat
 #--------------------------------------------
@@ -174,5 +174,55 @@ save(index_parcae_hab2_var, file  = here::here("output","index_parcae_hab2_var.R
 Mesanges::plot_index(index_parcae_hab2_mean, sqrt(index_parcae_hab2_var), color[2], "parcae", "defavorable" )
 
 rm(data_parcae)
+
+# Avec les donnees de SYLBOR
+#############################
+load(here::here('output',"hvie_ID_PROG_sylbor_tot_tt.RData"))
+ID_PROG_sylbor <- hvie_ID_PROG_sylbor$ID_PROG
+# On ne garde que les sites utilis?s dans les donn?es sylbor
+data_sylbor <- data %>%
+  dplyr::filter(data$ID_PROG %in% ID_PROG_sylbor)
+rm(hvie_ID_PROG_sylbor, ID_PROG_sylbor)
+
+
+# On supprime les points qui n'ont jamais contacté de sylbor
+data_sylbor <- Mesanges::supr_point(data_sylbor, "SYLBOR")
+
+# Calcul de l'index
+index_sylbor_mean <- Mesanges::index(data_sylbor, data_sylbor$SYLBOR)[[1]]
+index_sylbor_var <- Mesanges::index(data_sylbor, data_sylbor$SYLBOR)[[2]]
+
+# save 
+save(index_sylbor_mean, file  = here::here("output","index_sylbor_mean.RData"))
+save(index_sylbor_var, file  = here::here("output","index_sylbor_var.RData"))
+
+# Plot index
+Mesanges::plot_index(index_sylbor_mean, sqrt(index_sylbor_var), color[3], "sylbor", "total" )
+
+
+# Avec les donnees de SYLATR
+#############################
+load(here::here('output',"hvie_ID_PROG_sylatr_tot_tt.RData"))
+ID_PROG_sylatr <- hvie_ID_PROG_sylatr$ID_PROG
+# On ne garde que les sites utilis?s dans les donn?es sylatr
+data_sylatr <- data %>%
+  dplyr::filter(data$ID_PROG %in% ID_PROG_sylatr)
+rm(hvie_ID_PROG_sylatr, ID_PROG_sylatr)
+
+
+# On supprime les points qui n'ont jamais contacté de sylatr
+data_sylatr <- Mesanges::supr_point(data_sylatr, "SYLATR")
+
+# Calcul de l'index
+index_sylatr_mean <- Mesanges::index(data_sylatr, data_sylatr$SYLATR)[[1]]
+index_sylatr_var <- Mesanges::index(data_sylatr, data_sylatr$SYLATR)[[2]]
+
+# save 
+save(index_sylatr_mean, file  = here::here("output","index_sylatr_mean.RData"))
+save(index_sylatr_var, file  = here::here("output","index_sylatr_var.RData"))
+
+# Plot index
+Mesanges::plot_index(index_sylatr_mean, sqrt(index_sylatr_var), color[3], "sylatr", "total" )
+
 
 

@@ -116,7 +116,7 @@ for (i in 1:N){
   else {l_new <- max(temp[mydata[i,]==1])}
   l <- c(l,l_new)
   rm(l_new)}
-  
+
 
 # On remplace les 0 dans la covariables ?ge : un individu ne peut ?tre juv?nile que la premi?re ann?e
 # Donc apr?s la premi?re occasion de capture f, on a forcement que des 2. 
@@ -128,6 +128,9 @@ for (i in 1:N){
   }
 }
 cov_age[which(cov_age==0)] <- NA
+
+rm(i,j,temp,S,nsites,ID,hvie_to_keep,hvie_ID_PROG_parcae,hvie_parcae)
+
 
 #################
 #     Model     #
@@ -144,7 +147,7 @@ code <- nimbleCode({
   for (i in 1:N){
     for (t in f[i]:(l[i]-1)){ 
       # Survie
-      phi[i,t] <-  (1 / (1 + exp(-eta.phi[cov_hab[ind_site[i]],cov_age[i,t],t])))
+      logit(phi[i,t]) <- eta.phi[cov_hab[ind_site[i]],cov_age[i,t],t]
       # Recapture
       p[i,t]   <-  1 / (1 + exp(-(eta.p[t] + gamma.i.p * cov_ind[i]))) * (1-step(-hvie_site[ind_site[i],(t+1)])) 
     } #t
@@ -189,10 +192,11 @@ code <- nimbleCode({
   sigma.p ~ dunif(0.1,5)
   
   # Effet age et habitat
-  for (v in 1:2){    
-    gamma.u.phi[v] ~  dnorm(0,1)
-    gamma.h.phi[v] ~  dnorm(0,1)
-  }#v
+  gamma.u.phi[1] <- 0
+  gamma.h.phi[1] <- 0
+  gamma.u.phi[2] ~  dnorm(0,1)
+  gamma.h.phi[2] ~  dnorm(0,1)
+  
   
   # Effet cov ind
   gamma.i.p   ~  dnorm(0,1)
@@ -264,8 +268,8 @@ init1  <- list(z=cjs.init.z(mydata,f),
                mu.p=rnorm(1,0,1),
                sigma.phi=matrix(runif(4,0.1,5),2,2),
                sigma.p=runif(1,0.1,5),
-               gamma.h.phi=rnorm(2,0,1),
-               gamma.u.phi=rnorm(2,0,1),
+               gamma.h.phi=c(NA,0),
+               gamma.u.phi=c(NA,0),
                gamma.i.p=rnorm(1,0,1))
 
 init2  <- list(z=cjs.init.z(mydata,f),
@@ -273,8 +277,8 @@ init2  <- list(z=cjs.init.z(mydata,f),
                mu.p=rnorm(1,0,1),
                sigma.phi=matrix(runif(4,0.1,5),2,2),
                sigma.p=runif(1,0.1,5),
-               gamma.h.phi=rnorm(2,0,1),
-               gamma.u.phi=rnorm(2,0,1),
+               gamma.h.phi=c(NA,0),
+               gamma.u.phi=c(NA,0),
                gamma.i.p=rnorm(1,0,1))
 
 inits <- list(init1,init2)
@@ -397,54 +401,51 @@ var <- c("mean.phi","mu.phi",
 gelman <- NULL
 for(v in 1:length(var)) {
   gelman[v] <-gelman.diag(out[,c(paste(var[v], sep=""))], confidence = 0.95, transform=TRUE, autoburnin=TRUE)$psrf[1]
+  chainsPlot(out, paste(var[v], sep=""))
   print(paste(var[v],"  :   ",gelman[v],sep=""))
 }
 
-which(gelman > 1.03)
-for(v in (which(gelman > 1.03))) {
-  chainsPlot(out, paste(var[v], sep=""))
-  legend("topleft",legend=paste("gelman : ",round(gelman[v],4),sep=""))
-}
+
 
 #########################
-# Figures param?tres
+# Figures parametres
 #########################
 
 plot_parameters <- function(var,color,x_lab,y_lab,title) {
-
+  
   K = K-1
-
+  
   l_025 <- NULL
   l_25  <- NULL
   l_50  <- NULL
   l_75  <- NULL
   l_975 <- NULL
-
+  
   for (i in 1:K){
     l_025[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.025)))
     l_25[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.25)))
     l_50[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.5)))
     l_75[i]    <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.75)))
-    l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.95)))
+    l_975[i]   <- inv.logit(as.numeric(quantile(out_mat[,paste(var,i,"]",sep="")],0.975)))
   }
-
-
+  
+  
   color.transparent <- adjustcolor(color, alpha.f = 0.4)
   color.transparent_2 <- adjustcolor(color, alpha.f = 0.2)
-
-
+  
+  
   plot(l_50,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,1),ylab= y_lab,xlab=x_lab,main=title)
-
+  
   xx<- c(1:K,K:1)
   yy <- c(l_025[1:K],l_975[K:1])
   polygon(xx,yy,col=color.transparent_2, border=NA)
-
+  
   xx<- c(1:K,K:1)
   yy <- c(l_25[1:K],l_75[K:1])
   polygon(xx,yy,col=color.transparent, border=NA)
-
+  
   lines(l_50,lwd =2, col=color)
-
+  
   axis(1, at=c(1:K),labels=c(seq(2001,2018,1)))
   axis(side =2, cex.axis=1, las=2)
 }
@@ -452,11 +453,13 @@ plot_parameters <- function(var,color,x_lab,y_lab,title) {
 
 par(mfrow=c(2,2))
 color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv")
-plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad")
-plot_parameters("eta.phi[2, 1, ",color[1],"annees","survie","survie juv")
-plot_parameters("eta.phi[2, 2, ",color[2],"annees","survie","survie ad")
-plot_parameters("eta.p[",color[3],"annees","detection","detection")
+plot_parameters("eta.phi[1, 1, ",color[1],"annees","survie","survie juv - hab 1")
+plot_parameters("eta.phi[1, 2, ",color[2],"annees","survie","survie ad - hab 1")
+plot_parameters("eta.phi[2, 1, ",color[3],"annees","survie","survie juv - hab 2")
+plot_parameters("eta.phi[2, 2, ",color[4],"annees","survie","survie ad - hab 2")
+
+par(mfrow=c(1,1))
+plot_parameters("eta.p[","ivory4","annees","detection","detection")
 
 boxplot_maud <- function(var,x,color,x_lim,y_lim,x_lab,y_lab,ad) {
   

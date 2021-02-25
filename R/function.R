@@ -970,6 +970,20 @@ supr_point <- function (data, sp) {
       dplyr::summarise(n= sum(PARCAE))
   }
   
+  if(sp =="SYLBOR") {
+    # Quels point n ont jamais contacte l'sp ?
+    sum_sp_point <- data %>%
+      dplyr::group_by(point) %>%
+      dplyr::summarise(n= sum(SYLBOR))
+  }
+  
+  if(sp =="SYLATR") {
+    # Quels point n ont jamais contacte l'sp ?
+    sum_sp_point <- data %>%
+      dplyr::group_by(point) %>%
+      dplyr::summarise(n= sum(SYLATR))
+  }
+  
   # Nom des stations concernees
   point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   

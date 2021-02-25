@@ -11,19 +11,19 @@ library(nimble)
 #     Data      #
 #################
 
-#setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_sylbor")
+#setwd("//hpcm.cluster.calcul.hpc/Shared-2/QUEROUE/CMR_sylatr")
 setwd("~/These/MNHN/Mesanges/output")
 
 #Histoire de vie individus
-load("hvie_sylbor_tot_tt.RData")
+load("hvie_sylatr_tot_tt.RData")
 
 # Histoire de vie des sites
-load("hvie_ID_PROG_sylbor_tot_tt.RData")
+load("hvie_ID_PROG_sylatr_tot_tt.RData")
 
 # Nb ind
-N <- dim(hvie_sylbor)[1]
+N <- dim(hvie_sylatr)[1]
 # Nb site
-S <- dim(hvie_ID_PROG_sylbor)[1]
+S <- dim(hvie_ID_PROG_sylatr)[1]
 # Nb years
 K <- 19
 
@@ -31,34 +31,24 @@ K <- 19
 # DIMINUTION JEU DE DONNEES #
 #############################
 
-# # # Combien de sites garder ?
-# nsites <- 50
-# 
-# #On choisi aleatoirement n sites
-# #ID <- sort(sample(seq(1,S,1),nsites))
-# ID <- c (1,   3,  11,  20,  25,  
-#          26,  28,  43,  46,  47,  
-#          49,  62,  67,  70,  76,  
-#          79,  81,  93, 108, 115, 
-#          116, 123, 124, 129, 131, 
-#          136, 141, 147, 153, 167, 
-#          171, 172, 182, 184, 185, 
-#          189, 192, 196, 198, 200, 
-#          220, 225, 231, 233, 240, 
-#          247, 248, 251, 269, 275)
-# 
-# #On garde  que les sites selectionnes
-# hvie_ID_PROG_sylbor <- hvie_ID_PROG_sylbor[ID,]
-# S <- dim(hvie_ID_PROG_sylbor)[1]
-# 
-# #On garde que les individus des sites selectionnes
-# hvie_to_keep <- which((hvie_sylbor$vector_ID_PROG %in% ID)==TRUE)
-# hvie_sylbor <- hvie_sylbor[hvie_to_keep,]
-# N <- dim(hvie_sylbor)[1]
-# 
-# for(i in 1:N){
-#   hvie_sylbor$vector_ID_PROG[i] <- which(hvie_ID_PROG_sylbor$ID_PROG==hvie_sylbor$ID_PROG[i])
-# }
+# # Combien de sites garder ?
+nsites <- 50
+
+#On choisi aleatoirement n sites
+ID <- sort(sample(seq(1,S,1),nsites))
+
+#On garde  que les sites selectionnes
+hvie_ID_PROG_sylatr <- hvie_ID_PROG_sylatr[ID,]
+S <- dim(hvie_ID_PROG_sylatr)[1]
+
+#On garde que les individus des sites selectionnes
+hvie_to_keep <- which((hvie_sylatr$vector_ID_PROG %in% ID)==TRUE)
+hvie_sylatr <- hvie_sylatr[hvie_to_keep,]
+N <- dim(hvie_sylatr)[1]
+
+for(i in 1:N){
+  hvie_sylatr$vector_ID_PROG[i] <- which(hvie_ID_PROG_sylatr$ID_PROG==hvie_sylatr$ID_PROG[i])
+}
 
 ##############################
 ##############################
@@ -66,27 +56,27 @@ K <- 19
 # Les histoires de vie sont 1=juvenile, 2=adulte, 0= pas vu  
 
 # On cr?e x la matrice des covariables pour l'?ge 
-cov_age <- as.matrix(hvie_sylbor[,1:K])
+cov_age <- as.matrix(hvie_sylatr[,1:K])
 cov_age <- apply(cov_age,2,as.numeric)
 
 # On remplace par un tous les 1 et 2 pour former les donn?es en 0 et 1
-mydata <- as.matrix(hvie_sylbor[,1:K])
+mydata <- as.matrix(hvie_sylatr[,1:K])
 mydata <- apply(mydata,2,as.numeric)
 mydata[which(mydata>0)] <- 1
 
 # Vecteur donnant le site dans lequel a ?t? captur? chaque m?sange 
-ind_site <- hvie_sylbor$vector_ID_PROG
+ind_site <- hvie_sylatr$vector_ID_PROG
 
 #vecteur covariable individuelle recpature 
-cov_ind <- hvie_sylbor$cov_ind
+cov_ind <- hvie_sylatr$cov_ind
 
 # On remplace les histoires de vies des sites (nombre de captures secondaires par an) par des 1
 # quand le site est actif, sinon ce sont des 0.
 
-hvie_site <- as.matrix(hvie_ID_PROG_sylbor[1:K])
+hvie_site <- as.matrix(hvie_ID_PROG_sylatr[1:K])
 hvie_site[which(hvie_site>0)] <- 1
 
-#rm(hvie_ID_PROG_sylbor,hvie_sylbor,K,N,S)
+#rm(hvie_ID_PROG_sylatr,hvie_sylatr,K,N,S)
 
 
 #################
@@ -109,7 +99,7 @@ for (i in 1:N){
 l <- NULL
 for (i in 1:N){
   temp <- 1:K
-  if (hvie_sylbor$censure[i]==1){l_new <- K}
+  if (hvie_sylatr$censure[i]==1){l_new <- K}
   else {l_new <- max(temp[mydata[i,]==1])}
   l <- c(l,l_new)
   rm(l_new)}
@@ -126,7 +116,8 @@ for (i in 1:N){
 }
 cov_age[which(cov_age==0)] <- NA
 
-rm(i,j,temp,S,nsites,ID,hvie_to_keep,hvie_ID_PROG_sylbor,hvie_sylbor)
+rm(i,j,temp,S,nsites,ID,hvie_to_keep,hvie_ID_PROG_sylatr,hvie_sylatr)
+
 
 #################
 #     Model     #
@@ -158,11 +149,11 @@ code <- nimbleCode({
     eps.p[t] ~ dnorm(0, sd = sigma.p)
     
     for (u in 1:2){
-        # Survie
-        eta.phi[u,t] <- mu.phi + gamma.u.phi[u] + eps.phi[u,t]
-        #Random effect time
-        eps.phi[u,t] ~ dnorm(0, sd = sigma.phi[u])
-      }#u
+      # Survie
+      eta.phi[u,t] <- mu.phi + gamma.u.phi[u] + eps.phi[u,t]
+      #Random effect time
+      eps.phi[u,t] ~ dnorm(0, sd = sigma.phi[u])
+    }#u
   }#t
   
   # Survie
@@ -172,7 +163,7 @@ code <- nimbleCode({
   
   # sd pour effet aleatoire temps
   for(u in 1:2) {
-      sigma.phi[u] ~ dunif(0.1,5)
+    sigma.phi[u] ~ dunif(0.1,5)
   }#u
   
   # Proba recapture
@@ -330,7 +321,7 @@ out <- runMCMC(Cmcmc,
                summary = FALSE, 
                samplesAsCodaMCMC = TRUE) 
 
-save(out,file="out_CMR_sylbor.RData")
+save(out,file="out_CMR_sylatr.RData")
 
 
 # ######################################################
@@ -347,19 +338,19 @@ library(basicMCMCplots)
 library(boot)
 
 # Repertoire
-setwd("~/These/MNHN/Mesanges_cluster/CMR_sylbor")
+setwd("~/These/MNHN/Mesanges_cluster/CMR_sylatr")
 
 # Data
-load("hvie_sylbor_tot_new.RData")
+load("hvie_sylatr_tot_new.RData")
 
 # Dimension
 # Nb of individuals
-N <- dim(hvie_sylbor)[1]
+N <- dim(hvie_sylatr)[1]
 # Nb of capture events
 K <- 19
 
 # output
-load("out_CMR_sylbor_new.RData")
+load("out_CMR_sylatr_new.RData")
 out_mat <- as.matrix(out)
 
 #########################
