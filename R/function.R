@@ -884,3 +884,143 @@ supr_point <- function (data, sp) {
   return(data)
   
 }  
+
+
+#' Nouveau calcul d index
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+index_diff <- function(data, sp) {
+  
+  
+  years <- seq(min(data$annee),max(data$annee),1)
+  K <- length(years)
+  ID_point <- unique(data$point)
+  N <- length(ID_point)
+  hvie_point <- as.data.frame(matrix(NA,N,K))
+  hvie_point$ID <- ID_point
+  
+  
+  for (i in 1:N) {
+    data_point <- subset(data,data$point==hvie_point$ID[i])
+    for (j in 1:K) {
+      data_point_annee <- subset(data_point,data_point$annee==years[j])
+      
+      if(sp == "PARMAJ") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$PARMAJ[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "PARCAE") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$PARCAE[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "SYLATR") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$SYLATR[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "SYLBOR") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$SYLBOR[1]}
+        rm(data_point_annee)
+      }
+    }
+    
+    rm(data_point)
+  }
+  
+  
+  fluct <- NULL
+  
+  for (j in 2:K) {
+    sub_data <- subset(hvie_point,is.na(hvie_point[,(j-1)])==F & is.na(hvie_point[,j])==F)
+    fluct[j] <- sum(sub_data[,j]) / sum(sub_data[,(j-1)]) 
+  }
+  
+  ens <- NULL
+  ens[1] <- 1
+  for (i in 2:K) {
+    ens[i] <- ens[i-1] * fluct[i]
+  }
+  
+  return(ens)
+}
+
+
+#' Nb individus
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+calcul_n <- function(data,sp,index) {
+  
+  years <- seq(min(data$annee),max(data$annee),1)
+  K <- length(years)
+  ID_point <- unique(data$point)
+  N <- length(ID_point)
+  hvie_point <- as.data.frame(matrix(NA,N,K))
+  hvie_point$ID <- ID_point
+  
+  for (i in 1:N) {
+    data_point <- subset(data,data$point==hvie_point$ID[i])
+    for (j in 1:K) {
+      data_point_annee <- subset(data_point,data_point$annee==years[j])
+      
+      if(sp == "PARMAJ") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$PARMAJ[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "PARCAE") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$PARCAE[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "SYLATR") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$SYLATR[1]}
+        rm(data_point_annee)
+      }
+      
+      if(sp == "SYLBOR") {
+        
+        if (nrow(data_point_annee)==0) {hvie_point[i,j] <- NA}
+        if (nrow(data_point_annee)>=1) {hvie_point[i,j] <- data_point_annee$SYLBOR[1]}
+        rm(data_point_annee)
+      }
+    }
+    rm(data_point)
+  }
+  
+  nb_ind_an <- apply(hvie_point[,1:19],2,sum,na.rm=T)
+  
+  nb_point_an <- NULL
+  for(i in 1:K) {
+    nb_point_an[i] <- length(which(is.na(hvie_point[,i])==F))
+  }
+  
+  n_max <- which(nb_point_an==max(nb_point_an))
+  nm <- nb_ind_an[n_max]/index[n_max]
+  
+  return(round(as.numeric(nm)))
+}
+

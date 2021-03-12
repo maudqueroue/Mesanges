@@ -304,3 +304,5 @@ length(which(ad_1>0))
 length(which(juv_1>0))
 length(which(ad_juv==1))
 
+mean(data_1$cov_ind)
+mean(data_2$cov_ind)
