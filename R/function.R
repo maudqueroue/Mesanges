@@ -847,28 +847,28 @@ select_habitat_EPS <- function (CLC) {
 supr_point <- function (data, sp) {
   
   if(sp =="PARMAJ") {
-  # Quels point n ont jamais contacte l'sp ?
+  # Quels points n ont jamais contacte l'sp ?
   sum_sp_point <- data %>%
     dplyr::group_by(point) %>%
     dplyr::summarise(n= sum(PARMAJ))
   }
   
   if(sp =="PARCAE") {
-    # Quels point n ont jamais contacte l'sp ?
+    # Quels points n ont jamais contacte l'sp ?
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(PARCAE))
   }
   
   if(sp =="SYLBOR") {
-    # Quels point n ont jamais contacte l'sp ?
+    # Quels points n ont jamais contacte l'sp ?
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(SYLBOR))
   }
   
   if(sp =="SYLATR") {
-    # Quels point n ont jamais contacte l'sp ?
+    # Quels points n ont jamais contacte l'sp ?
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(SYLATR))
@@ -1023,4 +1023,185 @@ calcul_n <- function(data,sp,index) {
   
   return(round(as.numeric(nm)))
 }
+
+
+#' Calcul index
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+index_new <- function(data, sp) { 
+  
+  # Nombre de stations STOC
+  nsites <- length(unique(data$point))
+  # Nombre d'annees
+  nyears <- length(unique(data$annee))
+  
+  # effet fixe annee et site 
+  if(sp == "PARMAJ"){
+  model.glm <- glm(as.numeric(PARMAJ) ~ 0 + as.factor(point) + as.factor(annee), data = data, family = 'poisson')
+  }
+  
+  if(sp == "PARCAE"){
+    model.glm <- glm(as.numeric(PARCAE) ~ 0 + as.factor(point) + as.factor(annee), data = data, family = 'poisson')
+  }
+  
+  if(sp == "SYLATR"){
+    model.glm <- glm(as.numeric(SYLATR) ~ 0 + as.factor(point) + as.factor(annee), data = data, family = 'poisson')
+  }
+  
+  if(sp == "SYLBOR"){
+    model.glm <- glm(as.numeric(SYLBOR) ~ 0 + as.factor(point) + as.factor(annee), data = data, family = 'poisson')
+  }
+  
+  # Calcul de l'index en supposant que alpha et beta suivent des normales et en faisant du Monte Carlo, on simule un grand nombre de valeurs.
+  
+  alphaihat <- model.glm$coefficients[1:nsites]
+  se_alphaihat <- summary(model.glm)$coefficients[,'Std. Error'][1:nsites]
+  
+  nbMC <- 100
+  aik <- matrix(NA, nrow = nsites, ncol = nbMC)
+  for (i in 1:nsites){
+    for (j in 1:nbMC){
+      aik[i,j] <- rnorm(1, mean = alphaihat[i], sd = se_alphaihat[i])
+    }
+  }
+  
+  betathat <- model.glm$coefficients[(nsites+1):length(model.glm$coefficients)]
+  se_betathat <- summary(model.glm)$coefficients[,'Std. Error'][(nsites+1):length(model.glm$coefficients)]
+  
+  btk <- matrix(NA, nrow = nyears - 1, ncol = nbMC)
+  for (i in 1:(nyears - 1)){
+    for (j in 1:nbMC){
+      btk[i,j] <- rnorm(1, mean = betathat[i], sd = se_betathat[i])
+    }
+  }
+  
+  #gammaitk
+  gammaitk <- array(NA, dim = c(nsites, nyears - 1, nbMC))
+  for (t in 1:(nyears - 1)){
+    for (i in 1:nsites){
+      for (k in 1:nbMC){
+        gammaitk[i,t,k] <- exp(btk[t,k] + aik[i,k])
+      }
+      
+    }
+  }
+  
+  #gammat
+  gammat <- t(apply(gammaitk,c(2,3), sum, na.rm = TRUE))
+  
+  # On calcule la moyenne des log et leur variance 
+  logyt <- apply(log(gammat), 2, mean)
+  
+  sigma2tt <- (log(gammat) - matrix(rep(logyt, nbMC), nrow = nbMC, byrow = T))^2
+  sigma2t <- apply(sigma2tt, 2, mean)
+  
+  
+  index_mean <- logyt
+  index_var <- sigma2t
+  
+  out <- list(index_mean, index_var)
+  return(out)
+}
+
+
+#' Calcul index
+#'
+#' @param  data  
+#'
+#' @return 
+#' @export
+#'
+index_new_carre <- function(data_n, sp) { 
+  
+  
+  # effet fixe annee et site 
+  if(sp == "PARMAJ"){
+    data <- data_n %>%
+      dplyr::group_by(carre,annee) %>%
+      dplyr::summarise(n_ind = sum(PARMAJ))
+  }
+  
+  if(sp == "PARCAE"){
+    data <- data_n %>%
+      dplyr::group_by(carre,annee) %>%
+      dplyr::summarise(n_ind = sum(PARCAE))
+  }
+  
+  if(sp == "SYLATR"){
+    data <- data_n %>%
+      dplyr::group_by(carre,annee) %>%
+      dplyr::summarise(n_ind = sum(SYLATR))
+  }
+  
+  if(sp == "SYLBOR"){
+    data <- data_n %>%
+      dplyr::group_by(carre,annee) %>%
+      dplyr::summarise(n_ind = sum(SYLBOR))
+    
+  }
+  
+  # Nombre de stations STOC
+  nsites <- length(unique(data$carre))
+  # Nombre d'annees
+  nyears <- length(unique(data$annee))
+  
+  model.glm <- glm(as.numeric(n_ind) ~ 0 + as.factor(carre) + as.factor(annee), data = data, family = 'poisson')
+  
+  
+  # Calcul de l'index en supposant que alpha et beta suivent des normales et en faisant du Monte Carlo, on simule un grand nombre de valeurs.
+  
+  alphaihat <- model.glm$coefficients[1:nsites]
+  se_alphaihat <- summary(model.glm)$coefficients[,'Std. Error'][1:nsites]
+  
+  nbMC <- 100
+  aik <- matrix(NA, nrow = nsites, ncol = nbMC)
+  for (i in 1:nsites){
+    for (j in 1:nbMC){
+      aik[i,j] <- rnorm(1, mean = alphaihat[i], sd = se_alphaihat[i])
+    }
+  }
+  
+  betathat <- model.glm$coefficients[(nsites+1):length(model.glm$coefficients)]
+  se_betathat <- summary(model.glm)$coefficients[,'Std. Error'][(nsites+1):length(model.glm$coefficients)]
+  
+  btk <- matrix(NA, nrow = nyears - 1, ncol = nbMC)
+  for (i in 1:(nyears - 1)){
+    for (j in 1:nbMC){
+      btk[i,j] <- rnorm(1, mean = betathat[i], sd = se_betathat[i])
+    }
+  }
+  
+  #gammaitk
+  gammaitk <- array(NA, dim = c(nsites, nyears - 1, nbMC))
+  for (t in 1:(nyears - 1)){
+    for (i in 1:nsites){
+      for (k in 1:nbMC){
+        gammaitk[i,t,k] <- exp(btk[t,k] + aik[i,k])
+      }
+      
+    }
+  }
+  
+  #gammat
+  gammat <- t(apply(gammaitk,c(2,3), sum, na.rm = TRUE))
+  
+  # On calcule la moyenne des log et leur variance 
+  logyt <- apply(log(gammat), 2, mean)
+  
+  sigma2tt <- (log(gammat) - matrix(rep(logyt, nbMC), nrow = nbMC, byrow = T))^2
+  sigma2t <- apply(sigma2tt, 2, mean)
+  
+  
+  index_mean <- logyt
+  index_var <- sigma2t
+  
+  out <- list(index_mean, index_var)
+  return(out)
+}
+
+
 

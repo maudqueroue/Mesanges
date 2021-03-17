@@ -137,6 +137,18 @@ ID_parmaj <- hvie_parmaj$ID
 
 rm(check,ligne,colonne,bague)
 
+
+n_juv <- NULL
+n_ad <- NULL
+n_couple <- NULL
+
+
+for(i in 1:19) {
+  n_juv[i] <- length(which(hvie_parmaj[,i]==1))
+  n_ad[i] <- length(which(hvie_parmaj[,i]==2))
+  n_couple[i] <- (n_juv[i]/n_ad[i])*2
+}
+
 # 7. Gestion des transients
 # #-----------------------
 
@@ -306,3 +318,14 @@ length(which(ad_juv==1))
 
 mean(data_1$cov_ind)
 mean(data_2$cov_ind)
+
+n_juv <- NULL
+n_ad <- NULL
+n_couple <- NULL
+
+
+for(i in 1:19) {
+  n_juv[i] <- length(which(hvie_parmaj[,i]==1))
+  n_ad[i] <- length(which(hvie_parmaj[,i]==2))
+  n_couple[i] <- (n_juv[i]/n_ad[i])*2
+}
