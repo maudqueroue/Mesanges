@@ -83,7 +83,7 @@ data_parcae <- data %>%
   dplyr::filter(data$ID_PROG %in% ID_PROG_parcae)
 
 
-rm(hvie_ID_PROG_parmaj, hvie_ID_PROG_parcae, ID_PROG_parmaj,data)
+rm(hvie_ID_PROG_parmaj, hvie_ID_PROG_parcae, ID_PROG_parmaj, ID_PROG_parcae, data)
 
 
 #### PARMAJ #####
@@ -182,7 +182,9 @@ Mesanges::plot_index(index_parcae_2_carre[[1]], sqrt(index_parcae_2_carre[[2]]),
 ########################
 
 # PARMAJ
-data_parmaj <- Mesanges::supr_point(data_EPS, "PARMAJ")
+#data_parmaj <- Mesanges::supr_point(data_EPS, "PARMAJ")
+
+data_parmaj <- Mesanges::supr_point(data_parmaj, "PARMAJ")
 data_parmaj <- data_parmaj %>% dplyr::distinct(carre,annee,point,.keep_all = TRUE)
 
 index_parmaj_carre <- Mesanges::index_new_carre(data_parmaj, "PARMAJ")
@@ -194,7 +196,9 @@ save(index_parmaj_point,file=here::here("output","index_parmaj_point.RData"))
 Mesanges::plot_index(index_parmaj_point[[1]], sqrt(index_parmaj_point[[2]]), color[3], "parmaj", "all - point" )
 
 # PARCAE
-data_parcae <- Mesanges::supr_point(data_EPS, "PARCAE")
+# data_parcae <- Mesanges::supr_point(data_EPS, "PARCAE")
+
+data_parcae <- Mesanges::supr_point(data_parcae, "PARCAE")
 data_parcae <- data_parcae %>% dplyr::distinct(carre,annee,point,.keep_all = TRUE)
 
 index_parcae_carre <- Mesanges::index_new_carre(data_parcae, "PARCAE")
