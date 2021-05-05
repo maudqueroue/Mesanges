@@ -28,7 +28,23 @@ load(here::here("output","data_STOC.RData"))
 sylatr <- subset(data_STOC,data_STOC$ESPECE=="SYLATR")
 rm(data_STOC)
 
-#Informations 
+#### LATITUDE changement
+CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
+  dplyr::rename(
+    long = 'Lon',
+    lat  = 'Lat')
+
+ID_PROG <- CLC_STOC %>%
+  dplyr::filter(CLC_STOC$lat>46)
+
+ID_to_keep <- unique(ID_PROG$ID_PROG)
+
+sylatr <- sylatr %>%
+  dplyr::filter(sylatr$ID_PROG %in% ID_to_keep)
+
+rm(ID_to_keep,CLC_STOC,ID_PROG)
+
+# Informations 
 # Annees
 years <- seq(min(unique(substr(sylatr$DATE,7,10))),max(unique(substr(sylatr$DATE,7,10))),1)
 K <- length(years)
@@ -80,7 +96,7 @@ check <- which(hvie_sylatr[,1:K]==3) # 54
 hvie_sylatr <- Mesanges::check_3(hvie_sylatr, check)
 
 # Qui doit on trier au cas par cas :
-check <- which(hvie_sylatr[,1:K]==3) # 4
+check <- which(hvie_sylatr[,1:K]==3) # 3
 
 # cas pas cas
 ligne <- check[1]%%N
@@ -91,18 +107,12 @@ hvie_sylatr[ligne,colonne] <- 1
 
 ligne <- check[2]%%N
 colonne <- ceiling(check[2]/N)
-bague <- hvie_sylatr$ID[ligne] # ....5248969
+bague <- hvie_sylatr$ID[ligne] #....5225935
 subset(sylatr,sylatr$BAGUE==bague)
 hvie_sylatr[ligne,colonne] <- 1
 
 ligne <- check[3]%%N
 colonne <- ceiling(check[3]/N)
-bague <- hvie_sylatr$ID[ligne] #....5225935
-subset(sylatr,sylatr$BAGUE==bague)
-hvie_sylatr[ligne,colonne] <- 1
-
-ligne <- check[4]%%N
-colonne <- ceiling(check[4]/N)
 bague <- hvie_sylatr$ID[ligne] #....8255330
 subset(sylatr,sylatr$BAGUE==bague)
 hvie_sylatr[ligne,colonne] <- 1
@@ -135,15 +145,6 @@ bague <- hvie_sylatr$ID[ligne] #....5682208
 subset(sylatr,sylatr$BAGUE==bague)
 hvie_sylatr[ligne,]
 hvie_sylatr[ligne,colonne] <- 2
-hvie_sylatr[ligne,]
-
-#2
-ligne <- check[2]%%N
-colonne <- ceiling(check[2]/N)
-bague <- hvie_sylatr$ID[ligne] # ....5566918
-subset(sylatr,sylatr$BAGUE==bague)
-hvie_sylatr[ligne,]
-hvie_sylatr[ligne,colonne] <- 1
 hvie_sylatr[ligne,]
 
 # On a fini ?
@@ -212,8 +213,8 @@ hvie_sylatr <- Mesanges::link_hvie(hvie_sylatr, hvie_ID_PROG_sylatr)
 
 # 11. Save
 #--------------
-save(hvie_sylatr,file=here::here('output',"hvie_sylatr_tot_tt.RData"))
-save(hvie_ID_PROG_sylatr,file=here::here('output',"hvie_ID_PROG_sylatr_tot_tt.RData"))
+save(hvie_sylatr,file=here::here('output',"hvie_sylatr_nord.RData"))
+save(hvie_ID_PROG_sylatr,file=here::here('output',"hvie_ID_PROG_sylatr_nord.RData"))
 
 
 # Analyses supplementaires 

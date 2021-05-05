@@ -82,9 +82,42 @@ ID_PROG_parcae <- hvie_ID_PROG_parcae$ID_PROG
 data_parcae <- data %>%
   dplyr::filter(data$ID_PROG %in% ID_PROG_parcae)
 
+# Avec les donnees de SYLATR
+#############################
 
-rm(hvie_ID_PROG_parmaj, hvie_ID_PROG_parcae, ID_PROG_parmaj, ID_PROG_parcae, data)
+load(here::here("output","hvie_ID_PROG_sylatr_nord.RData"))
+ID_PROG_sylatr <- hvie_ID_PROG_sylatr$ID_PROG
+# On ne garde que les sites utilises dans les donnees sylatr
+data_sylatr <- data %>%
+  dplyr::filter(data$ID_PROG %in% ID_PROG_sylatr)
 
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_sylatr <- Mesanges::supr_point(data_sylatr, "SYLATR")
+# on supprime les doublons
+data_sylatr <- data_sylatr %>% dplyr::distinct(carre,annee,point,.keep_all = TRUE)
+
+
+# Avec les donnees de SYLBOR
+#############################
+
+load(here::here("output","hvie_ID_PROG_sylbor_nord.RData"))
+ID_PROG_sylbor <- hvie_ID_PROG_sylbor$ID_PROG
+# On ne garde que les sites utilises dans les donnees sylbor
+data_sylbor <- data %>%
+  dplyr::filter(data$ID_PROG %in% ID_PROG_sylbor)
+
+# On supprime les points qui n'ont jamais contacté de mesanges
+data_sylbor <- Mesanges::supr_point(data_sylbor, "SYLBOR")
+# on supprime les doublons
+data_sylbor <- data_sylbor %>% dplyr::distinct(carre,annee,point,.keep_all = TRUE)
+
+
+
+rm(hvie_ID_PROG_parmaj, hvie_ID_PROG_parcae, ID_PROG_parmaj, ID_PROG_parcae, 
+   hvie_ID_PROG_sylatr, hvie_ID_PROG_sylbor, ID_PROG_sylatr, ID_PROG_sylbor,
+   data)
+
+##### HABITAT TRI ####
 
 #### PARMAJ #####
 
@@ -104,7 +137,6 @@ data_parmaj_2 <- data_parmaj %>%
 data_parmaj_2 <- Mesanges::supr_point(data_parmaj_2, "PARMAJ")
 # on supprime les doublons
 data_parmaj_2 <- data_parmaj_2 %>% dplyr::distinct(carre,annee,point,.keep_all = TRUE)
-
 
 
 
@@ -137,6 +169,7 @@ data_parcae_2 <- data_parcae_2 %>% dplyr::distinct(carre,annee,point,.keep_all =
 
 index_parmaj_1_point <- Mesanges::index_new(data_parmaj_1, "PARMAJ")
 save(index_parmaj_1_point,file=here::here("output","index_parmaj_1_point.RData"))
+load(here::here("output","index_parmaj_1_point.RData"))
 Mesanges::plot_index(index_parmaj_1_point[[1]], sqrt(index_parmaj_1_point[[2]]), color[3], "parmaj", "favorable - point" )
 
 
@@ -147,7 +180,8 @@ Mesanges::plot_index(index_parmaj_1_carre[[1]], sqrt(index_parmaj_1_carre[[2]]),
 
 index_parmaj_2_point <- Mesanges::index_new(data_parmaj_2, "PARMAJ")
 save(index_parmaj_2_point,file=here::here("output","index_parmaj_2_point.RData"))
-Mesanges::plot_index(index_parmaj_2_point[[1]], sqrt(index_parmaj_2_point[[2]]), color[3], "parmaj", "defavorable - point" )
+load(here::here("output","index_parmaj_2_point.RData"))
+Mesanges::plot_index(index_parmaj_2_point[[1]], sqrt(index_parmaj_2_point[[2]]), color[1], "parmaj", "defavorable - point" )
 
 
 index_parmaj_2_carre <- Mesanges::index_new_carre(data_parmaj_2, "PARMAJ")
@@ -159,7 +193,8 @@ Mesanges::plot_index(index_parmaj_2_carre[[1]], sqrt(index_parmaj_2_carre[[2]]),
 
 index_parcae_1_point <- Mesanges::index_new(data_parcae_1, "PARCAE")
 save(index_parcae_1_point,file=here::here("output","index_parcae_1_point.RData"))
-Mesanges::plot_index(index_parcae_1_point[[1]], sqrt(index_parcae_1_point[[2]]), color[3], "parcae", "favorable - point" )
+load(here::here("output","index_parcae_1_point.RData"))
+Mesanges::plot_index(index_parcae_1_point[[1]], sqrt(index_parcae_1_point[[2]]), color[2], "parcae", "favorable - point" )
 
 
 index_parcae_1_carre <- Mesanges::index_new_carre(data_parcae_1, "PARCAE")
@@ -169,16 +204,43 @@ Mesanges::plot_index(index_parcae_1_carre[[1]], sqrt(index_parcae_1_carre[[2]]),
 
 index_parcae_2_point <- Mesanges::index_new(data_parcae_2, "PARCAE")
 save(index_parcae_2_point,file=here::here("output","index_parcae_2_point.RData"))
-Mesanges::plot_index(index_parcae_2_point[[1]], sqrt(index_parcae_2_point[[2]]), color[3], "parcae", "defavorable - point" )
+load(here::here("output","index_parcae_2_point.RData"))
+Mesanges::plot_index(index_parcae_2_point[[1]], sqrt(index_parcae_2_point[[2]]), color[4], "parcae", "defavorable - point" )
 
 
 index_parcae_2_carre <- Mesanges::index_new_carre(data_parcae_2, "PARCAE")
 save(index_parcae_2_carre,file=here::here("output","index_parcae_2_carre.RData"))
 Mesanges::plot_index(index_parcae_2_carre[[1]], sqrt(index_parcae_2_carre[[2]]), color[3], "parcae", "defavorable - carre" )
 
+#### SYLATR
+
+index_sylatr_carre <- Mesanges::index_new_carre(data_sylatr, "SYLATR")
+save(index_sylatr_carre,file=here::here("output","index_sylatr_carre_nord.RData"))
+Mesanges::plot_index(index_sylatr_carre[[1]], sqrt(index_sylatr_carre[[2]]), color[3], "sylatr", "carre" )
+
+#### SYLBOR
+
+index_sylbor_carre <- Mesanges::index_new_carre(data_sylbor, "SYLBOR")
+save(index_sylbor_carre,file=here::here("output","index_sylbor_carre_nord.RData"))
+Mesanges::plot_index(index_sylbor_carre[[1]], sqrt(index_sylbor_carre[[2]]), color[3], "sylbor", "carre" )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ########################
-# AVEC TOUTES LES DATA
+# SANS DISTINCTION HABITAT MESANGE
 ########################
 
 # PARMAJ
@@ -208,4 +270,5 @@ Mesanges::plot_index(index_parcae_carre[[1]], sqrt(index_parcae_carre[[2]]), col
 index_parcae_point <- Mesanges::index_new(data_parcae, "PARCAE")
 save(index_parcae_point,file=here::here("output","index_parcae_point.RData"))
 Mesanges::plot_index(index_parcae_point[[1]], sqrt(index_parcae_point[[2]]), color[3], "parcae", "all - point" )
+
 
