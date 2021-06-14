@@ -172,8 +172,8 @@ for (i in 1:nrow(data_ind)){
 
 
 data <- data_ind %>% 
-  #dplyr::group_by(annee,nDATE,ESPECE, ID_PROG, new_AGE) %>%
-  dplyr::group_by(annee,nDATE,ESPECE,new_AGE) %>%
+  dplyr::group_by(annee,nDATE,ESPECE, ID_PROG, new_AGE) %>%
+  #dplyr::group_by(annee,nDATE,ESPECE,new_AGE) %>%
   dplyr::summarise(n=dplyr::n()) %>%
   tidyr::pivot_wider(names_from = new_AGE, values_from = n) 
 
@@ -189,17 +189,20 @@ library(gamm4)
 #pheno=function(Borne_inf,Borne_Sup,Resolution){
 
 # Préparation des valeurs d'incrémentation et du nombre d'années
-IntervalleTemps <- seq(-25,5,1)  
+IntervalleTemps <- seq(-30,5,1)  
 l <- length(IntervalleTemps)
 annees <- as.vector(unique(data$annee))
 Nombre_annees <- length(annees)
-out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees))
+out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees),"a2"=rep(0,Nombre_annees))
 a <- rep(0,Nombre_annees)
+a2 <- rep(0,Nombre_annees)
+
+
 # Boucle générale sur les années
 for (i in 1:Nombre_annees) {
   data_annee <- subset(data, annee==annees[i])
-  out1 <- data.frame("annee"=rep(0,l),"DT"=rep(0,l),"AIC"=rep(0,l))
-  
+  out1 <- data.frame("annee"=rep(0,l),"DT"=rep(0,l),"AIC"=rep(0,l),"AIC2"=rep(0,l))
+ 
   # Boucle sur les décalages phénologiques testés
   for (h in 1:l){
     Decalage_test <- IntervalleTemps[h]
@@ -222,10 +225,11 @@ for (i in 1:Nombre_annees) {
     # Attention, si le modèle change, il est probable que les indices des valeurs à récupérer 
     # dans la matrice de résultats du modèle changent aussi. 
     # Cela concerne la ligne  sortie[t,3]=(-logLik(model$mer))[[1]]
-    model <- gamm4(cbind(P,A)~s(date),family=binomial,data=data_annee)
+    model <- gamm4(cbind(P,A)~s(date), random=~(1|ID_PROG),family=binomial,data=data_annee)
     out1$annee[h] <- annees[i]
     out1$DT[h]    <- Decalage_test
-    out1$AIC[h]   <- (-logLik(model$mer))[[1]]
+    out1$AIC[h]   <- summary(model$mer)$AICtab[1]
+    out1$AIC2[h]   <- (-logLik(model$mer))[[1]]
     data_annee    <- data_annee[,1:((ncol(data_annee))-1)]
     
     # plus utile
@@ -238,6 +242,7 @@ for (i in 1:Nombre_annees) {
 
   # Recherche du minimum d'AIC et du décalage correspondant
   a[i] <- which(out1$AIC==min(out1$AIC))
+  a2[i] <- which(out1$AIC==min(out1$AIC))
   # Sélection des 10 valeurs d'AIC et des décalages correspondant en fonction de la position du minimum dans la série de décalages testés. 
   out2$AIC   <- signif(out1$AIC[(a[i]-5):(a[i]+5)],digit=6)
   out2$DT    <- out1$DT[(a[i]-5):(a[i]+5)]
@@ -250,9 +255,12 @@ for (i in 1:Nombre_annees) {
   out3$annee[i] <- annees[i]			
   out3$Decalage_pheno[i] <- (-Regression_quadratique[[12]][3]/(2*Regression_quadratique[[12]][2]))		
   out3$min[i] <- IntervalleTemps[a[i]]
+  out3$a2[i] <- IntervalleTemps[a2[i]]
+  
   
   rm(data_annee,out1,out2,Regression_quadratique,DT_carre,h)
 }
+
 
 DP <- out3$Decalage_pheno
 save(DP,file = here::here('output',"DP.RData"))
