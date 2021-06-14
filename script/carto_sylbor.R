@@ -14,7 +14,7 @@ Fr <- sf::st_read(dsn = here::here('data','France'),
                   layer = "DEPARTEMENT",
                   quiet = TRUE) %>% 
   tibble::add_column(PAYS = "FR") %>% 
-  sf::st_transform(2154) %>% 
+  sf::st_transform(4326) %>% 
   dplyr::group_by(PAYS)%>% 
   dplyr::summarize()
 
@@ -60,13 +60,13 @@ CLC_STOC <- dplyr::left_join(CLC_STOC, sylbor_STOC, by = c("ID_PROG"))
 # Creation de la couche de points
 dsf_STOC <-  CLC_STOC %>%
   sf::st_as_sf(coords = c("long","lat"), crs = 4326) %>%
-  sf::st_transform(crs = 2154)
+  sf::st_transform(crs = 4326)
 
 # Plot carte
 ggplot2::ggplot(Fr) +
   ggplot2::geom_sf() +
   ggplot2::geom_sf(data = dsf_STOC, ggplot2::aes(color=n)) +
-  ggplot2::coord_sf(crs = 2154, datum = sf::st_crs(2154)) +
+  ggplot2::coord_sf(crs = 4326, datum = sf::st_crs(4326)) +
   ggplot2::guides(fill = FALSE) +
   ggplot2::ggtitle("France") +
   ggplot2::theme(title = ggplot2::element_text(size = 16))+
@@ -110,13 +110,13 @@ CLC_EPS <- dplyr::left_join(CLC_EPS, sylbor_EPS, by = c("point"))
 # Creation de la couche de points
 dsf_EPS <-  CLC_EPS %>%
   sf::st_as_sf(coords = c("long","lat"), crs = 4326) %>%
-  sf::st_transform(crs = 2154)
+  sf::st_transform(crs = 4326)
 
 # Plot EPS
 ggplot2::ggplot(Fr) +
   ggplot2::geom_sf() +
   ggplot2::geom_sf(data = dsf_EPS, ggplot2::aes(color=n)) +
-  ggplot2::coord_sf(crs = 2154, datum = sf::st_crs(2154)) +
+  ggplot2::coord_sf(crs = 4326, datum = sf::st_crs(4326)) +
   ggplot2::guides(fill = FALSE) +
   ggplot2::ggtitle("France") +
   ggplot2::theme(title = ggplot2::element_text(size = 16))+
