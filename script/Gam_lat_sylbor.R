@@ -100,3 +100,31 @@ model <- gamm4(n~s(lat),family=poisson,data=data)
 
 plot.gam(model$gam)
 
+# Data EPS
+#------------------
+
+load(here::here("output","data_EPS.RData"))
+
+# Nom des points
+ID_EPS <- unique(data_EPS$point)
+
+# on garde les point avec de la sybor
+sylbor_EPS <- subset(data_EPS,data_EPS$SYLBOR>0)
+
+# Cb de sylbor en moyenne par an
+sylbor_EPS <- sylbor_EPS %>%
+  dplyr::group_by(point) %>%
+  dplyr::summarise(n=sum(SYLBOR)) 
+
+# Les differents points avec leur longitude et latitude et type CLC
+load(here::here("output","data_EPS.RData"))
+
+CLC_EPS <- data_EPS %>%
+  dplyr::rename(
+    long = 'longitude_wgs84',
+    lat  = 'latitude_wgs84') %>%
+  dplyr::distinct(point, .keep_all=T) %>%
+  dplyr::select("point", "long", "lat") %>%
+  dplyr::filter(!is.na(long)) %>%
+  dplyr::filter(!is.na(lat))
+

@@ -28,34 +28,27 @@ load(here::here("output","data_STOC.RData"))
 #ajout colonne annee
 data_STOC$year <- substr(data_STOC$DATE,7,10)
 
-# Nom de ID PROG
-ID_STOC <- unique(data_STOC$ID_PROG)
-
 # On garde que sylbor
-sylbor_STOC <- subset(data_STOC,data_STOC$ESPECE=="SYLBOR")
+sylbor_STOC <- subset(data_STOC,data_STOC$ESPECE=="SYLBOR") 
 
-# Cb de sylbor en moyenne par an
+# enlever les lignes sans nom de site ou annee
+sylbor_STOC <- sylbor_STOC %>% 
+  dplyr::filter(!is.na(ID_PROG)) %>%
+  dplyr::filter(!is.na(year))
+
+# Cb de sylbor par an par annee
 sylbor_STOC <- sylbor_STOC %>%
   dplyr::group_by(ID_PROG,year) %>%
-  dplyr::summarise(n=dplyr::n()) %>%
-  dplyr::group_by(ID_PROG) %>%
-  dplyr::summarise(n=mean(n)) 
-
-# On enleve donnee quand moins de 5/an
-sylbor_STOC$n[which(sylbor_STOC$n<5)] <- NA
+  dplyr::summarise(n=dplyr::n())
 
 # Les differents points avec leur longitude et latitude et type CLC
-CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
-  dplyr::rename(
-    long = 'Lon',
-    lat  = 'Lat')
+CLC_STOC <- read.table(here::here("output","CLC_STOC.csv"),head=T,sep=";") %>%
+  dplyr::select('ID_PROG',"lat",'long')
 
-# On garde que les points utilisés dans le STOC 
-CLC_STOC <- CLC_STOC %>%
-  dplyr::filter(CLC_STOC$ID_PROG %in% ID_STOC)
-
-# On relie les point avec le nb moyen de sylbor vu par an 
-CLC_STOC <- dplyr::left_join(CLC_STOC, sylbor_STOC, by = c("ID_PROG")) 
+# On relie les stations avec leur coordonnées
+CLC_STOC <- dplyr::left_join(sylbor_STOC, CLC_STOC, by = c("ID_PROG")) %>%
+  dplyr::filter(!is.na(long)) %>%
+  dplyr::filter(!is.na(lat))
 
 # Creation de la couche de points
 dsf_STOC <-  CLC_STOC %>%
@@ -78,34 +71,34 @@ ggplot2::ggplot(Fr) +
 
 load(here::here("output","data_EPS.RData"))
 
-# Nom des points
-ID_EPS <- unique(data_EPS$point)
+data_EPS <- data_EPS[,c('annee','carre','point','SYLBOR')]
 
 # on garde les point avec de la sybor
 sylbor_EPS <- subset(data_EPS,data_EPS$SYLBOR>0)
 
-# Cb de sylbor en moyenne par an
+lien_carre_point <- sylbor_EPS %>%
+  dplyr::distinct(carre,.keep_all = TRUE) 
+lien_carre_point <- lien_carre_point[,c('carre','point')]
+
 sylbor_EPS <- sylbor_EPS %>%
-  dplyr::group_by(point) %>%
-  dplyr::summarise(n=sum(SYLBOR)) 
+  dplyr::group_by(annee,carre)  %>%
+  dplyr::summarise(n=dplyr::n())
 
 # Les differents points avec leur longitude et latitude et type CLC
-load(here::here("output","data_EPS.RData"))
+load(here::here("output","CLC_EPS.RData"))
 
-CLC_EPS <- data_EPS %>%
-  dplyr::rename(
-    long = 'longitude_wgs84',
-    lat  = 'latitude_wgs84') %>%
-  dplyr::distinct(point, .keep_all=T) %>%
+# On eneleve les point sans lat ou long
+CLC_EPS <- CLC_EPS %>%
   dplyr::select("point", "long", "lat") %>%
   dplyr::filter(!is.na(long)) %>%
-  dplyr::filter(!is.na(lat))
+  dplyr::filter(!is.na(lat)) 
      
-
-CLC_EPS <- CLC_EPS %>%
-  dplyr::filter(CLC_EPS$point %in% ID_EPS)
-
-CLC_EPS <- dplyr::left_join(CLC_EPS, sylbor_EPS, by = c("point")) 
+# On relie les point avec leur coordonnées
+sylbor_EPS <- dplyr::left_join(sylbor_EPS, lien_carre_point, by = c("carre"))
+  
+CLC_EPS <- dplyr::left_join(sylbor_EPS, CLC_EPS, by = c("point")) %>%
+  dplyr::filter(!is.na(long)) %>%
+  dplyr::filter(!is.na(lat)) 
 
 # Creation de la couche de points
 dsf_EPS <-  CLC_EPS %>%
@@ -122,3 +115,10 @@ ggplot2::ggplot(Fr) +
   ggplot2::theme(title = ggplot2::element_text(size = 16))+
   ggplot2::scale_color_gradientn(colours = rainbow(6))
 
+# Gam latitude
+#----------------------------------------------
+library(gamm4)
+
+model <- gamm4(n~s(lat),family=poisson,data=CLC_EPS)
+
+plot.gam(model$gam)

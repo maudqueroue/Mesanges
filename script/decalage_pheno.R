@@ -172,8 +172,8 @@ for (i in 1:nrow(data_ind)){
 
 
 data <- data_ind %>% 
+  #dplyr::group_by(annee,nDATE,ESPECE, new_AGE) %>%
   dplyr::group_by(annee,nDATE,ESPECE, ID_PROG, new_AGE) %>%
-  #dplyr::group_by(annee,nDATE,ESPECE,new_AGE) %>%
   dplyr::summarise(n=dplyr::n()) %>%
   tidyr::pivot_wider(names_from = new_AGE, values_from = n) 
 
@@ -225,7 +225,7 @@ for (i in 1:Nombre_annees) {
     # Attention, si le modèle change, il est probable que les indices des valeurs à récupérer 
     # dans la matrice de résultats du modèle changent aussi. 
     # Cela concerne la ligne  sortie[t,3]=(-logLik(model$mer))[[1]]
-    model <- gamm4(cbind(P,A)~s(date), random=~(1|ID_PROG),family=binomial,data=data_annee)
+    model <- gamm4(cbind(P,A)~s(date),random=~(1|ID_PROG),family=binomial,data=data_annee)
     out1$annee[h] <- annees[i]
     out1$DT[h]    <- Decalage_test
     out1$AIC[h]   <- summary(model$mer)$AICtab[1]
@@ -264,3 +264,17 @@ for (i in 1:Nombre_annees) {
 
 DP <- out3$Decalage_pheno
 save(DP,file = here::here('output',"DP.RData"))
+
+
+load(here::here('output','DP.RData'))
+load(here::here('output','DP_es.RData'))
+
+par(mfrow=c(1,1))
+color<-c("#FF8830","#A6B06D","#589482","#8C2423")
+plot(DP, lwd=2, pch=19, col=color[1], axes=F, xlab= "années", ylab= "décalage phénologique")
+points(seq(1.2,19.2,1),pch=17, lwd=2,DP_es, col=color[2])
+legend("topright",legend=c("sans effet aleatoire site", "avec effet aletoire site"),pch=c(19,17),col=color[1:2], bty='n')
+axis(1, at=seq(1.1,19.1,1), labels=seq(2001,2019,1))
+axis(2, las=2)
+?legend 
+?axis
