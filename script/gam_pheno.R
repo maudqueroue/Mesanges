@@ -77,6 +77,12 @@ unique(data$new_AGE)
 
 # On reformate les données
 #------------------------------------------------------------------------
+
+#on enleve les doublons : oiseaux capturé deux fois meme journée
+
+data_STOC <- data %>% 
+  dplyr::distinct(DATE,ID_PROG,BAGUE,ESPECE,new_AGE,.keep_all = TRUE)
+
 data_STOC <- data %>% 
   dplyr::group_by(ID_PROG,DATE,ESPECE,annee,new_AGE) %>%
   dplyr::summarise(n=dplyr::n()) %>%
@@ -127,7 +133,7 @@ CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
     lat  = 'Lat')
 
 ID_PROG <- CLC_STOC %>%
-  dplyr::filter(CLC_STOC$lat>46)
+  dplyr::filter(CLC_STOC$lat>45)
 
 ID_to_keep <- unique(ID_PROG$ID_PROG)
 
@@ -137,9 +143,9 @@ rm(ID_to_keep,CLC_STOC,ID_PROG,data_STOC,i,num_Date)
 
 ##################################################################
 
-test <- data   %>%
+data <- data   %>%
   dplyr::group_by(DATE,ESPECE,annee,nDATE) %>%
-  dplyr::summarise(n=sum(c(A,P)))
+  dplyr::summarise_at(.vars= dplyr::vars(A,P), .funs= "sum")
 
 library(gamm4)
 

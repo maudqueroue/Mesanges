@@ -846,11 +846,20 @@ select_habitat_EPS <- function (CLC) {
 #'
 supr_point <- function (data, sp) {
   
+  if(sp =="TITS") {
+    # Quels points n ont jamais contacte l'sp ?
+    sum_sp_point <- data %>%
+      dplyr::group_by(point) %>%
+      dplyr::summarise_at(.vars= dplyr::vars("PARMAJ","PARCAE"), .funs= "sum")
+    point_supr <- sum_sp_point$point[which(sum_sp_point$PARMAJ == 0 | sum_sp_point$PARCAE ==0)]
+  }
+  
   if(sp =="PARMAJ") {
   # Quels points n ont jamais contacte l'sp ?
   sum_sp_point <- data %>%
     dplyr::group_by(point) %>%
     dplyr::summarise(n= sum(PARMAJ))
+  point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   }
   
   if(sp =="PARCAE") {
@@ -858,6 +867,7 @@ supr_point <- function (data, sp) {
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(PARCAE))
+    point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   }
   
   if(sp =="SYLBOR") {
@@ -865,6 +875,7 @@ supr_point <- function (data, sp) {
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(SYLBOR))
+    point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   }
   
   if(sp =="SYLATR") {
@@ -872,15 +883,13 @@ supr_point <- function (data, sp) {
     sum_sp_point <- data %>%
       dplyr::group_by(point) %>%
       dplyr::summarise(n= sum(SYLATR))
+    point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   }
-  
-  # Nom des stations concernees
-  point_supr <- sum_sp_point$point[which(sum_sp_point$n == 0)]
   
   # On supprime ces points
   data <- data %>%
     dplyr::filter(!(data$point %in% point_supr))
-
+  
   return(data)
   
 }  
@@ -1103,7 +1112,7 @@ index_new <- function(data, sp) {
   index_mean <- logyt
   index_var <- sigma2t
   
-  out <- list(index_mean, index_var)
+  out <- list(index_mean, index_var, gammaitk)
   return(out)
 }
 

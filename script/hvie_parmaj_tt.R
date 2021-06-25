@@ -183,39 +183,9 @@ hvie_parmaj <- Mesanges::calcul_cov_ind(hvie_parmaj)
 
 which(hvie_parmaj$cov_ind<0) # ca parait bon
 
-# 9. Hvie site
-#-------------------------------------------------
-
-load(here::here('output',"hvie_ID_PROG.RData"))
-
-#Quels sont les sites concernant les parmaj
-hvie_ID_PROG_parmaj <- hvie_ID_PROG %>%
-  dplyr::filter(hvie_ID_PROG$ID_PROG %in% unique(hvie_parmaj$ID_PROG))
-
-rm(hvie_ID_PROG)
-
-# 10. type d'habitat
-#----------------------------------------
-
-# On ajoute les infos contenu dans CLC_STOC aux hvies 
-load(here::here("output","CLC_STOC.RData"))
-hvie_ID_PROG_parmaj <- dplyr::left_join(hvie_ID_PROG_parmaj, CLC_STOC, by = c("ID_PROG")) 
-
-rm(CLC_STOC)  
-
-# type d'habitat
-hvie_ID_PROG_parmaj <- Mesanges::cov_hab(hvie_ID_PROG_parmaj)
-
-# 11. Creation vecteur pour lier hvie individus et hvie site
-#---------
-
-hvie_parmaj <- Mesanges::link_hvie(hvie_parmaj, hvie_ID_PROG_parmaj)
-
 # 12. Save
 #--------------
-save(hvie_parmaj,file=here::here('output',"hvie_parmaj_tot_tt.RData"))
-save(hvie_ID_PROG_parmaj,file=here::here('output',"hvie_ID_PROG_parmaj_tot_tt.RData"))
-
+save(hvie_parmaj,file=here::here('output',"hvie_parmaj.RData"))
 
 # Analyses supplementaires 
 #---------------------------
