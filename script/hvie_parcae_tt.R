@@ -138,17 +138,6 @@ ID_parcae <- hvie_parcae$ID
 rm(check,ligne,colonne,bague)
 
 
-n_juv <- NULL
-n_ad <- NULL
-n_couple <- NULL
-
-
-for(i in 1:19) {
-  n_juv[i] <- length(which(hvie_parcae[,i]==1))
-  n_ad[i] <- length(which(hvie_parcae[,i]==2))
-  n_couple[i] <- (n_juv[i]/n_ad[i])*2
-}
-
 # 7. Gestion des transients
 # #-----------------------
 

@@ -854,6 +854,14 @@ supr_point <- function (data, sp) {
     point_supr <- sum_sp_point$point[which(sum_sp_point$PARMAJ == 0 | sum_sp_point$PARCAE ==0)]
   }
   
+  if(sp =="SYL") {
+    # Quels points n ont jamais contacte l'sp ?
+    sum_sp_point <- data %>%
+      dplyr::group_by(point) %>%
+      dplyr::summarise_at(.vars= dplyr::vars("SYLATR","SYLBOR"), .funs= "sum")
+    point_supr <- sum_sp_point$point[which(sum_sp_point$SYLATR == 0 | sum_sp_point$SYLBOR ==0)]
+  }
+  
   if(sp =="PARMAJ") {
   # Quels points n ont jamais contacte l'sp ?
   sum_sp_point <- data %>%

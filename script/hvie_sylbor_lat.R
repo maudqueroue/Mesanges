@@ -27,14 +27,15 @@ load(here::here("output","data_STOC.RData"))
 sylbor <- subset(data_STOC,data_STOC$ESPECE=="SYLBOR")
 rm(data_STOC)
 
-#### LATITUDE changement
+# 2. Selection de la latitude
+#------------------------
 CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
   dplyr::rename(
     long = 'Lon',
     lat  = 'Lat')
 
 ID_PROG <- CLC_STOC %>%
-  dplyr::filter(CLC_STOC$lat>46)
+  dplyr::filter(CLC_STOC$lat>45)
 
 ID_to_keep <- unique(ID_PROG$ID_PROG)
 
@@ -43,7 +44,7 @@ sylbor <- sylbor %>%
 
 rm(ID_to_keep,CLC_STOC,ID_PROG)
 
-#Informations 
+# Informations 
 # Annees
 years <- seq(min(unique(substr(sylbor$DATE,7,10))),max(unique(substr(sylbor$DATE,7,10))),1)
 K <- length(years)
@@ -51,7 +52,7 @@ K <- length(years)
 ID_sylbor <- unique(sylbor$BAGUE)
 N <- length(ID_sylbor)
 
-# 2. Redefinition de l'age 
+# 3. Redefinition de l'age 
 #-----------------------
 unique(sylbor$AGE)
 
@@ -59,7 +60,7 @@ sylbor <- Mesanges::new_age(sylbor)
 
 unique(sylbor$new_AGE)
 
-# 3. Creation des histoires de vie
+# 4. Creation des histoires de vie
 # -----------------------
 
 # hvie
@@ -78,18 +79,18 @@ hvie_sylbor[hvie_sylbor=="C"] <- 3
 hvie_sylbor[hvie_sylbor=="AP"] <- 4
 
 
-# 4. On regarde s'il n'y a pas des individus vu jeunes plus tard que la premiere occasion de capture
+# 5. On regarde s'il n'y a pas des individus vu jeunes plus tard que la premiere occasion de capture
 #----------------------------------
 
 hvie_sylbor <- Mesanges::check_age(hvie_sylbor)
 N <- dim(hvie_sylbor)[1]
 
 
-# 5. On regarde s'il reste des incertains
+# 6. On regarde s'il reste des incertains
 #------------------------------------------
 
 # si vus une seule fois incertains, on retire la donnees.
-check <- which(hvie_sylbor[,1:K]==3) # 19
+check <- which(hvie_sylbor[,1:K]==3) # 18
 
 # Si il est capture qu'une seule annee, on supprime
 hvie_sylbor <- Mesanges::check_3(hvie_sylbor, check)
@@ -97,11 +98,11 @@ hvie_sylbor <- Mesanges::check_3(hvie_sylbor, check)
 # Est-ce qu'on a fini ? 
 check <- which(hvie_sylbor[,1:K]==3) # Oui
 
-rm(colonne,ligne,bague,check)
+rm(check)
 
-# 6. On regarde ceux pour qui on a pas pu trancher entre Adulte et poussin
+# 7. On regarde ceux pour qui on a pas pu trancher entre Adulte et poussin
 #----------------------------
-check <- which(hvie_sylbor[,1:K]==4) # 44
+check <- which(hvie_sylbor[,1:K]==4) # 43
 
 # On retranscrit en numerique
 sylbor$new_AGE[sylbor$new_AGE=="P"]<-1
@@ -137,7 +138,7 @@ ID_sylbor <- hvie_sylbor$ID
 
 rm(check,ligne,colonne,bague)
 
-# 7. Gestion des transients
+# 8. Gestion des transients
 # #-----------------------
 
 hvie_sylbor <- Mesanges::transient_tt(sylbor, hvie_sylbor)
@@ -151,7 +152,7 @@ hvie_sylbor <- Mesanges::supp_ind(hvie_sylbor)
 N <- dim(hvie_sylbor)[1]
 ID_sylbor <- hvie_sylbor$ID
 
-# 8. Covariable individuelle 
+# 9. Covariable individuelle 
 #---------
 
 # Il nous faut le nombre de captures total (-1 pour transience)
@@ -171,26 +172,9 @@ hvie_sylbor <- Mesanges::calcul_cov_ind(hvie_sylbor)
 
 which(hvie_sylbor$cov_ind<0) # ca parait bon
 
-# 9. Hvie site
-#-------------------------------------------------
-
-load(here::here('output',"hvie_ID_PROG.RData"))
-
-#Quels sont les sites concernant les sylbor
-hvie_ID_PROG_sylbor <- hvie_ID_PROG %>%
-  dplyr::filter(hvie_ID_PROG$ID_PROG %in% unique(hvie_sylbor$ID_PROG))
-
-rm(hvie_ID_PROG)
-
-# 10. Creation vecteur pour lier hvie individus et hvie site
-#---------
-
-hvie_sylbor <- Mesanges::link_hvie(hvie_sylbor, hvie_ID_PROG_sylbor)
-
-# 11. Save
+# 10. Save
 #--------------
-save(hvie_sylbor,file=here::here('output',"hvie_sylbor_nord.RData"))
-save(hvie_ID_PROG_sylbor,file=here::here('output',"hvie_ID_PROG_sylbor_nord.RData"))
+save(hvie_sylbor,file=here::here('output',"hvie_sylbor.RData"))
 
 
 # Analyses supplementaires 

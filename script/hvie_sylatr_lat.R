@@ -28,14 +28,15 @@ load(here::here("output","data_STOC.RData"))
 sylatr <- subset(data_STOC,data_STOC$ESPECE=="SYLATR")
 rm(data_STOC)
 
-#### LATITUDE changement
+# 2. Selection de la latitude
+#------------------------
 CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
   dplyr::rename(
     long = 'Lon',
     lat  = 'Lat')
 
 ID_PROG <- CLC_STOC %>%
-  dplyr::filter(CLC_STOC$lat>46)
+  dplyr::filter(CLC_STOC$lat>45)
 
 ID_to_keep <- unique(ID_PROG$ID_PROG)
 
@@ -52,7 +53,7 @@ K <- length(years)
 ID_sylatr <- unique(sylatr$BAGUE)
 N <- length(ID_sylatr)
 
-# 2. Redefinition de l'age 
+# 3. Redefinition de l'age 
 #-----------------------
 unique(sylatr$AGE)
 
@@ -60,7 +61,7 @@ sylatr <- Mesanges::new_age(sylatr)
 
 unique(sylatr$new_AGE)
 
-# 3. Creation des histoires de vie
+# 4. Creation des histoires de vie
 # -----------------------
 
 # hvie
@@ -79,18 +80,17 @@ hvie_sylatr[hvie_sylatr=="C"] <- 3
 hvie_sylatr[hvie_sylatr=="AP"] <- 4
 
 
-# 4. On regarde s'il n'y a pas des individus vu jeunes plus tard que la premiere occasion de capture
+# 5. On regarde s'il n'y a pas des individus vus jeunes plus tard que la premiere occasion de capture
 #----------------------------------
 
 hvie_sylatr <- Mesanges::check_age(hvie_sylatr)
 N <- dim(hvie_sylatr)[1]
 
-
-# 5. On regarde s'il reste des incertains
+# 6. On regarde s'il reste des incertains
 #------------------------------------------
 
 # si vus une seule fois incertains, on retire la donnees.
-check <- which(hvie_sylatr[,1:K]==3) # 54
+check <- which(hvie_sylatr[,1:K]==3) # 38
 
 # Si il est capture qu'une seule annee, on supprime
 hvie_sylatr <- Mesanges::check_3(hvie_sylatr, check)
@@ -122,9 +122,9 @@ check <- which(hvie_sylatr[,1:K]==3) # Oui
 
 rm(colonne,ligne,bague,check)
 
-# 6. On regarde ceux pour qui on a pas pu trancher entre Adulte et poussin
+# 7. On regarde ceux pour qui on a pas pu trancher entre Adulte et poussin
 #----------------------------
-check <- which(hvie_sylatr[,1:K]==4) # 127
+check <- which(hvie_sylatr[,1:K]==4) # 110
 
 # On retranscrit en numerique
 sylatr$new_AGE[sylatr$new_AGE=="P"]<-1
@@ -136,7 +136,7 @@ sylatr$new_AGE[sylatr$new_AGE=="A"]<-2
 hvie_sylatr <- Mesanges::check_4(sylatr, hvie_sylatr, check)
 
 # Qui doit on trier au cas par cas :
-check <- which(hvie_sylatr[,1:K]==4) # 2 individus
+check <- which(hvie_sylatr[,1:K]==4) # 2 individu
 
 #1
 ligne <- check[1]%%N
@@ -145,6 +145,15 @@ bague <- hvie_sylatr$ID[ligne] #....5682208
 subset(sylatr,sylatr$BAGUE==bague)
 hvie_sylatr[ligne,]
 hvie_sylatr[ligne,colonne] <- 2
+hvie_sylatr[ligne,]
+
+#2
+ligne <- check[2]%%N
+colonne <- ceiling(check[2]/N)
+bague <- hvie_sylatr$ID[ligne] #....5566918
+subset(sylatr,sylatr$BAGUE==bague)
+hvie_sylatr[ligne,]
+hvie_sylatr[ligne,colonne] <- 1
 hvie_sylatr[ligne,]
 
 # On a fini ?
@@ -160,7 +169,7 @@ ID_sylatr <- hvie_sylatr$ID
 
 rm(check,ligne,colonne,bague)
 
-# 7. Gestion des transients
+# 8. Gestion des transients
 # #-----------------------
 
 hvie_sylatr <- Mesanges::transient_tt(sylatr, hvie_sylatr)
@@ -174,7 +183,7 @@ hvie_sylatr <- Mesanges::supp_ind(hvie_sylatr)
 N <- dim(hvie_sylatr)[1]
 ID_sylatr <- hvie_sylatr$ID
 
-# 8. Covariable individuelle 
+# 9. Covariable individuelle 
 #---------
 
 # Il nous faut le nombre de captures total (-1 pour transience)
@@ -194,27 +203,9 @@ hvie_sylatr <- Mesanges::calcul_cov_ind(hvie_sylatr)
 
 which(hvie_sylatr$cov_ind<0) # ca parait bon
 
-# 9. Hvie site
-#-------------------------------------------------
-
-load(here::here('output',"hvie_ID_PROG.RData"))
-
-#Quels sont les sites concernant les sylatr
-hvie_ID_PROG_sylatr <- hvie_ID_PROG %>%
-  dplyr::filter(hvie_ID_PROG$ID_PROG %in% unique(hvie_sylatr$ID_PROG))
-
-rm(hvie_ID_PROG)
-
-
-# 10. Creation vecteur pour lier hvie individus et hvie site
-#---------
-
-hvie_sylatr <- Mesanges::link_hvie(hvie_sylatr, hvie_ID_PROG_sylatr)
-
-# 11. Save
+# 10. Save
 #--------------
-save(hvie_sylatr,file=here::here('output',"hvie_sylatr_nord.RData"))
-save(hvie_ID_PROG_sylatr,file=here::here('output',"hvie_ID_PROG_sylatr_nord.RData"))
+save(hvie_sylatr,file=here::here('output',"hvie_sylatr.RData"))
 
 
 # Analyses supplementaires 
