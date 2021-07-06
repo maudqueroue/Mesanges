@@ -137,6 +137,10 @@ ind_bt1$l_50_bt1   <- apply(ind_bt1$gammat_bt1,2,quantile,probs=0.50)
 ind_bt1$l_75_bt1   <- apply(ind_bt1$gammat_bt1,2,quantile,probs=0.75)
 ind_bt1$l_975_bt1  <- apply(ind_bt1$gammat_bt1,2,quantile,probs=0.975)
 
+
+mean(ind_bt1$gammat_bt1)
+sd(ind_bt1$gammat_bt1)
+
 load(here::here("output","index_parcae_LQ_point.RData"))
 ind_bt2 <- list()
 ind_bt2$gammat_bt2 <- t(apply(index_parcae_LQ_point[[3]],c(2,3), mean, na.rm = TRUE))
@@ -145,6 +149,10 @@ ind_bt2$l_25_bt2   <- apply(ind_bt2$gammat_bt2,2,quantile,probs=0.25)
 ind_bt2$l_50_bt2   <- apply(ind_bt2$gammat_bt2,2,quantile,probs=0.50)
 ind_bt2$l_75_bt2   <- apply(ind_bt2$gammat_bt2,2,quantile,probs=0.75)
 ind_bt2$l_975_bt2  <- apply(ind_bt2$gammat_bt2,2,quantile,probs=0.975)
+
+mean(ind_bt2$gammat_bt2)
+sd(ind_bt2$gammat_bt2)
+
 
 load(here::here("output","index_parmaj_HQ_point.RData"))
 ind_gt1 <- list()
@@ -155,6 +163,9 @@ ind_gt1$l_50_gt1   <- apply(ind_gt1$gammat_gt1,2,quantile,probs=0.50)
 ind_gt1$l_75_gt1   <- apply(ind_gt1$gammat_gt1,2,quantile,probs=0.75)
 ind_gt1$l_975_gt1  <- apply(ind_gt1$gammat_gt1,2,quantile,probs=0.975)
 
+mean(ind_gt1$gammat_gt1)
+sd(ind_gt1$gammat_gt1)
+
 load(here::here("output","index_parmaj_LQ_point.RData"))
 ind_gt2 <- list()
 ind_gt2$gammat_gt2 <- t(apply(index_parmaj_LQ_point[[3]],c(2,3), mean, na.rm = TRUE))
@@ -163,6 +174,9 @@ ind_gt2$l_25_gt2   <- apply(ind_gt2$gammat_gt2,2,quantile,probs=0.25)
 ind_gt2$l_50_gt2   <- apply(ind_gt2$gammat_gt2,2,quantile,probs=0.50)
 ind_gt2$l_75_gt2   <- apply(ind_gt2$gammat_gt2,2,quantile,probs=0.75)
 ind_gt2$l_975_gt2  <- apply(ind_gt2$gammat_gt2,2,quantile,probs=0.975)
+
+mean(ind_gt2$gammat_gt2)
+sd(ind_gt2$gammat_gt2)
 
 color<-c("#FF8830","#A6B06D","#589482","#8C2423")
 color_bt <- color[3]
@@ -176,8 +190,9 @@ color.transparent_2_gt<- adjustcolor(color_gt, alpha.f = 0.2)
 
 K=18
 par(mfrow=c(1,2))
+par(cex=0.9, mai=c(0.7,0.8,0.5,0.1))
 
-plot(ind_bt1$l_50_bt1,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of tits per count point",xlab="",main="High Quality Habitats")
+plot(ind_bt1$l_50_bt1,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of tits per count point",xlab="",main="")
 xx<- c(1:K,K:1)
 yy <- c(ind_bt1$l_025_bt1[1:K],ind_bt1$l_975_bt1[K:1])
 polygon(xx,yy,col=color.transparent_2_bt, border=NA)
@@ -192,11 +207,13 @@ yy <- c(ind_gt1$l_25_gt1[1:K],ind_gt1$l_75_gt1[K:1])
 polygon(xx,yy,col=color.transparent_gt, border=NA)
 lines(ind_bt1$l_50_bt1,lwd =2, col=color_bt)
 lines(ind_gt1$l_50_gt1,lwd =2, col=color_gt)
-axis(1, at=c(1:K),labels=c(seq(2002,2019,1)))
+axis(1, at=seq(1,K,4),labels=c(seq(2002,2019,4)))
 axis(side =2, cex.axis=1, las=2)
+mtext("High-quality habitats",side=3,line=-0.5, at =9, cex=1.05)
+mtext("a",side=3,line=0.5,at=-1,cex=1.1)
 
 
-plot(ind_bt2$l_50_bt2,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of tits per count point",xlab="",main="Low Quality Habitats")
+plot(ind_bt2$l_50_bt2,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of tits per count point",xlab="",main="")
 xx<- c(1:K,K:1)
 yy <- c(ind_bt2$l_025_bt2[1:K],ind_bt2$l_975_bt2[K:1])
 polygon(xx,yy,col=color.transparent_2_bt, border=NA)
@@ -211,7 +228,9 @@ yy <- c(ind_gt2$l_25_gt2[1:K],ind_gt2$l_75_gt2[K:1])
 polygon(xx,yy,col=color.transparent_gt, border=NA)
 lines(ind_bt2$l_50_bt2,lwd =2, col=color_bt)
 lines(ind_gt2$l_50_gt2,lwd =2, col=color_gt)
-axis(1, at=c(1:K),labels=c(seq(2002,2019,1)))
+axis(1, at=seq(1,K,4),labels=c(seq(2002,2019,4)))
 axis(side =2, cex.axis=1, las=2)
-legend('topright',legend=c("Blue tit", "Great tit"),lty=1,lwd=2,col=color[3:2], bty='n')
+mtext("Low-quality habitats",side=3,line=-0.5, at =9, cex=1.05)
+mtext("b",side=3,line=0.5,at=-1,cex=1.1)
+legend(12.5,2.5,legend=c("Blue tit", "Great tit"), lwd=2,lty=c(1,1),col=c(color[3:2]), bty='n')
 

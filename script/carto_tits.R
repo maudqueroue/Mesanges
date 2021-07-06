@@ -65,9 +65,9 @@ ggplot2::xlim(-4.5, 7.8) +
 ggplot2::ylim(42.5,51) +
 ggplot2::geom_sf() +
 ggplot2::geom_point(data = data, ggplot2::aes(x= long, y=lat, color=cov_hab, shape =cov_hab, size=cov_hab)) +
-ggplot2::scale_color_manual(values=c('#C75146','#56B4E9','#540804','#2F4858'),name='',labels=c('Count Point High Quality','Count Point Low Quality','CR Site High Quality','CR Site Low Quality')) +
-ggplot2::scale_shape_manual(values=c(19,19,17,17),name='',labels=c('Count Point High Quality','Count Point Low Quality','CR Site High Quality','CR Site Low Quality')) +
-ggplot2::scale_size_manual(values=c(0.9,0.9,3,3),name='',labels=c('Count Point High Quality','Count Point Low Quality','CR Site High Quality','CR Site Low Quality')) +
+ggplot2::scale_color_manual(values=c('#C75146','#56B4E9','#540804','#2F4858'),name='',labels=c('Count points high-quality','Count points low-quality','CR sites high-quality','CR sites low-quality')) +
+ggplot2::scale_shape_manual(values=c(19,19,17,17),name='',labels=c('Count points high-quality','Count points low-quality','CR sites high-quality','CR sites low-quality')) +
+ggplot2::scale_size_manual(values=c(0.9,0.9,3,3),name='',labels=c('Count points high-quality','Count points low-quality','CR sites high-quality','CR sites low-quality')) +
 ggplot2::theme_minimal()
 
 
