@@ -68,6 +68,6 @@ hvie_sylbor <- Mesanges::link_hvie(hvie_sylbor, hvie_ID_PROG_syl)
 hvie_sylatr <- Mesanges::link_hvie(hvie_sylatr, hvie_ID_PROG_syl)
 
 save(hvie_ID_PROG_syl,file=here::here('output',"hvie_ID_PROG_syl.RData"))
-save(hvie_sylatr,file=here::here('output',"hvie_sylatr.RData"))
+save(hvie_sylbor,file=here::here('output',"hvie_sylbor.RData"))
 save(hvie_sylatr,file=here::here('output',"hvie_sylatr.RData"))
 
