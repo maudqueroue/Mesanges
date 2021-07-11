@@ -348,3 +348,10 @@ for (i in 1:Nombre_annees) {
 
 DP_sylbor<- out3$Decalage_pheno
 save(DP_sylbor,file = here::here('output',"DP_sylbor.RData"))
+
+
+par(mfrow=c(1,1))
+color<-c("#FF8830","#A6B06D","#589482","#8C2423")
+plot(DP[1:19], c(DP_sylbor[1:18],0), lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique", ylab= "decalage arrivee jardin")
+axis(1)
+axis(2, las=2)
