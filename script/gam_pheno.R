@@ -42,6 +42,7 @@ data <- data %>%
 unique(data$THEME.SESSION)
 # -- 503904
 
+
 # 2 QUELLES ANNEES GARDE T ON ?
 #------------------------------------------------------------------------
 
@@ -93,6 +94,7 @@ data_STOC$DATE <- lubridate::dmy(data_STOC$DATE)
 data_STOC  <- data_STOC %>%
   dplyr::arrange(DATE)
 
+# NA deviennent 0
 data_STOC[is.na(data_STOC)] <- 0
 
 data_STOC <- data_STOC %>%
@@ -124,26 +126,19 @@ data <- data %>%
 data[is.na(data)] <- 0
 
 
-#5. QUELLES STATIONS GARDER EN LATITUDE
+#5. QUELLES STATIONS GARDER ?
 #---------------------------------------------------
+load(here::here('output','hvie_ID_PROG_syl.RData'))
 
-CLC_STOC <- read.table(here::here("data","coord_STOC.csv"),head=T,sep=";") %>%
-  dplyr::rename(
-    long = 'Lon',
-    lat  = 'Lat')
+ID_PROG <-  unique(hvie_ID_PROG_syl$ID_PROG)
 
-ID_PROG <- CLC_STOC %>%
-  dplyr::filter(CLC_STOC$lat>45)
+data <- data[which((data$ID_PROG %in% ID_PROG)==TRUE),]
 
-ID_to_keep <- unique(ID_PROG$ID_PROG)
-
-data <- data[which((data$ID_PROG %in% ID_to_keep)==TRUE),]
-
-rm(ID_to_keep,CLC_STOC,ID_PROG,data_STOC,i,num_Date)
+rm(hvie_ID_PROG_syl,ID_PROG,data_STOC,i,num_Date)
 
 ##################################################################
 
-data <- data   %>%
+data2 <- data   %>%
   dplyr::group_by(DATE,ESPECE,annee,nDATE) %>%
   dplyr::summarise_at(.vars= dplyr::vars(A,P), .funs= "sum")
 
@@ -242,6 +237,5 @@ axis(2, las=2)
 ?axis
 
 DP <- out3$Decalage_pheno
-save(DP,file = here::here('output',"DP_es_ad.RData"))
-load(here::here('output','DP.RData'))
-load(here::here('output','DP_es.RData'))
+save(DP,file = here::here('output',"DP.RData"))
+
