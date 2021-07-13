@@ -102,7 +102,6 @@ ind_gw$l_50_gw   <- apply(ind_gw$gammat_gw,2,quantile,probs=0.50)
 ind_gw$l_75_gw   <- apply(ind_gw$gammat_gw,2,quantile,probs=0.75)
 ind_gw$l_975_gw  <- apply(ind_gw$gammat_gw,2,quantile,probs=0.975)
 
-
 mean(ind_gw$gammat_gw)
 sd(ind_gw$gammat_gw)
 
@@ -149,4 +148,5 @@ lines(ind_gw$l_50_gw,lwd =2, col=color_gw)
 lines(ind_bc$l_50_bc,lwd =2, col=color_bc)
 axis(1, at=seq(1,K,4),labels=c(seq(2002,2019,4)))
 axis(side =2, cex.axis=1, las=2)
+
 
