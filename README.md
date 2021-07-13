@@ -1,5 +1,5 @@
 # Mesanges
-Mon travail sur les mésanges :baby_chick:
+Mon travail sur les mésanges :baby_chick: (mise à jour à faire)
 
 ## Le plan à suivre :clipboard:
 
