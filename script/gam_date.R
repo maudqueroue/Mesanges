@@ -350,8 +350,35 @@ DP_sylbor<- out3$Decalage_pheno
 save(DP_sylbor,file = here::here('output',"DP_sylbor.RData"))
 
 
-par(mfrow=c(1,1))
+par(mfrow=c(1,2))
+par(cex=0.9, mai=c(0.7,0.8,0.5,0.1))
 color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot(DP[1:19], c(DP_sylbor[1:18],0), lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique", ylab= "decalage arrivee jardin")
+plot(DP[1:19], c(DP_sylatr[1:18],0), lwd=2, pch=19, col=color[2], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "decalage phénologique selon de la reproduction chez les têtes noires")
+axis(1)
+axis(2, seq(-20,5,3),seq(-20,5,3), las=2)
+plot(DP[1:19], c(DP_sylbor[1:18],0), lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "decalage phénologique selon de la reproduction chez les jardins")
+axis(1)
+axis(2, las=2)
+
+load(here::here('output','DP.RData'))
+load(here::here('output','DP_sylatr.RData'))
+load(here::here('output','DP_sylbor.RData'))
+load(here::here('output','index_sylatr_point.RData'))
+
+plot(seq(1,19,1), DP_sylbor2[1:19], ylim=c(-30,7), lwd=2, pch=19, col=color[2], axes=F, xlab= "année", ylab= "decalage phénologique selon les années de la reproduction des têtes noires")
+points(seq(1.2,19.2,1), c(DP_sylatr[1:18],0), lwd=2, pch=19, col=color[1])
+axis(1)
+axis(2, las=2)
+
+plot(seq(1,19,1), DP, ylim=c(-30,7), lwd=2, pch=19, col=color[2], axes=F, xlab= "année", ylab= "decalage phénologique selon les années de la reproduction des têtes noires")
+axis(1)
+axis(2, las=2)
+
+
+plot(DP[2:19], index_sylatr_point[[1]], lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "nombre de sylatr en log")
+axis(1)
+axis(2, las=2)
+
+plot(c(DP_sylatr[2:18],0), index_sylatr_point[[1]], lwd=2, pch=19, col=color[2], axes=F, xlab= "decalage phenologique entre sylatr", ylab= "nombre de sylatr en log")
 axis(1)
 axis(2, las=2)
