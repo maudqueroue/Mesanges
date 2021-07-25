@@ -117,9 +117,9 @@ ind_bc$l_975_bc  <- apply(ind_bc$gammat_bc,2,quantile,probs=0.975)
 mean(ind_bc$gammat_bc)
 sd(ind_bc$gammat_bc)
 
-color<-c("#FF8830","#A6B06D","#589482","#8C2423")
+color<-c("#2B2D42","#E4BB97","#D08C60","indianred4")
 color_gw <- color[3]
-color_bc <- color[2]
+color_bc <- color[1]
 
 color.transparent_gw <- adjustcolor(color_gw, alpha.f = 0.4)
 color.transparent_2_gw<- adjustcolor(color_gw, alpha.f = 0.2)
@@ -131,7 +131,7 @@ K=18
 par(mfrow=c(1,1))
 par(cex=0.9, mai=c(0.7,0.8,0.5,0.1))
 
-plot(ind_gw$l_50_gw,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of tits per count point",xlab="",main="")
+plot(ind_gw$l_50_gw,type='l',axes=F,lwd =2,col="ivory4",ylim=c(0,2.5),ylab="Mean number of birds per count point",xlab="",main="")
 xx<- c(1:K,K:1)
 yy <- c(ind_gw$l_025_gw[1:K],ind_gw$l_975_gw[K:1])
 polygon(xx,yy,col=color.transparent_2_gw, border=NA)
@@ -148,5 +148,6 @@ lines(ind_gw$l_50_gw,lwd =2, col=color_gw)
 lines(ind_bc$l_50_bc,lwd =2, col=color_bc)
 axis(1, at=seq(1,K,4),labels=c(seq(2002,2019,4)))
 axis(side =2, cex.axis=1, las=2)
+legend(13,2.67,legend=c("Blackcap", "Garden warbler"), lwd=2,lty=c(1,1),col=c(color[c(1,3)]), bty='n')
 
 

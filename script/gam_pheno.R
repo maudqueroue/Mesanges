@@ -151,7 +151,7 @@ IntervalleTemps <- seq(-30,5,1)
 l <- length(IntervalleTemps)
 annees <- as.vector(unique(data$annee))
 Nombre_annees <- length(annees)
-out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees),"a2"=rep(0,Nombre_annees))
+out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees),"a2"=rep(0,Nombre_annees),'sd'=rep(0,Nombre_annees))
 a <- rep(0,Nombre_annees)
 a2 <- rep(0,Nombre_annees)
 
@@ -213,6 +213,8 @@ for (i in 1:Nombre_annees) {
   out3$Decalage_pheno[i] <- (-Regression_quadratique[[12]][3]/(2*Regression_quadratique[[12]][2]))		
   out3$min[i] <- IntervalleTemps[a[i]]
   out3$a2[i] <- IntervalleTemps[a2[i]]
+  out3$sd[i] <- sqrt((1/Regression_quadratique[[12]][2])) 
+  
   
   
   rm(data_annee,out1,out2,Regression_quadratique,DT_carre,h)
@@ -220,22 +222,7 @@ for (i in 1:Nombre_annees) {
 
 
 DP <- out3$Decalage_pheno
+DP_sd <- out3$sd
 save(DP,file = here::here('output',"DP.RData"))
-
-
-load(here::here('output','DP.RData'))
-load(here::here('output','DP_es.RData'))
-
-par(mfrow=c(1,1))
-color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot(DP, lwd=2, pch=19, col=color[1], axes=F, xlab= "années", ylab= "décalage phénologique")
-points(seq(1.2,19.2,1),pch=17, lwd=2,DP_es, col=color[2])
-legend("topright",legend=c("sans effet aleatoire site", "avec effet aletoire site"),pch=c(19,17),col=color[1:2], bty='n')
-axis(1, at=seq(1.1,19.1,1), labels=seq(2001,2019,1))
-axis(2, las=2)
-?legend 
-?axis
-
-DP <- out3$Decalage_pheno
-save(DP,file = here::here('output',"DP.RData"))
+save(DP_sd,file = here::here('output',"DP_sd.RData"))
 
