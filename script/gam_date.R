@@ -124,7 +124,7 @@ data_sylatr <- data_sylatr %>%
 # Age en colonne 
 data_sylatr <- data_sylatr %>% 
   tidyr::pivot_wider(names_from = new_AGE, values_from = c('SYLATR')) 
-data_sylatr[is.na(data_STOC)] <- 0
+data_sylatr[is.na(data_sylatr)] <- 0
 
 #5. QUELLES STATIONS GARDER ?
 #---------------------------------------------------
@@ -158,7 +158,7 @@ data_sylbor <- data_sylbor %>%
 # Age en colonne 
 data_sylbor <- data_sylbor %>% 
   tidyr::pivot_wider(names_from = new_AGE, values_from = c('SYLBOR')) 
-data_sylbor[is.na(data_STOC)] <- 0
+data_sylbor[is.na(data_sylbor)] <- 0
 
 #5. QUELLES STATIONS GARDER ?
 #---------------------------------------------------
@@ -176,7 +176,7 @@ rm(hvie_ID_PROG_syl,ID_PROG,data,i,num_Date, data_STOC)
 library(gamm4)
 
 # Préparation des valeurs d'incrémentation et du nombre d'années
-IntervalleTemps <- seq(-20,+15,1)  
+IntervalleTemps <- seq(-30,+15,1)  
 l <- length(IntervalleTemps)
 annees <- as.vector(unique(data_sylatr$annee))
 Nombre_annees <- length(annees)-1
@@ -254,71 +254,19 @@ DP_sd_sylatr <- out3$sd
 save(DP_sylatr,file = here::here('output',"DP_sylatr.RData"))
 save(DP_sd_sylatr,file = here::here('output',"DP_sd_sylatr.RData"))
 
-
-############ Comparaison decalage pheno et decalage arrivée fauvettes à tête noire
-
-load(here::here('output','DP.RData'))
-load(here::here('output','DP_sd.RData'))
-
-load(here::here('output','DP_sylatr.RData'))
-load(here::here('output','DP_sd_sylatr.RData'))
-
-DP_sd_sylatr <- c(DP_sd_sylatr,0)
-DP_sylatr <- c(DP_sylatr,0)
-
-
-par(mfrow=c(1,3))
-color<-c("#584B53","#D66853","A3A380","indianred4")
-cc <- adjustcolor("#736B60", alpha.f = 0.4)
-
-plot(1:19,DP[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-23,-3), axes=F, xlab= "years", ylab= "Phenological shift between species")
-for(i in 1:19){
-  arrows(i,(DP[i]-DP_sd[i]),i,(DP[i]+DP_sd[i]),length=0, angle=0, code=3,col=cc)
-}
-points(1:19,DP[1:19],lwd=2, pch=19, col=color[2])
-axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
-axis(2, las=2)
-mtext("a",side=3,line=0.5,at=-1,cex=1.1)
-
-plot(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-17,6), axes=F, xlab= "years", ylab= "Phenological shift in blackcap")
-for(i in 1:19){
-  arrows(i,(DP_sylatr[i]-DP_sd_sylatr[i]),i,(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
-}
-points(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1])
-axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
-axis(2, las=2)
-mtext("b",side=3,line=0.5,at=-1,cex=1.1)
-
-plot(DP[1:19], DP_sylatr, lwd=2, pch=19, col=color[1], xlim=c(-22,-2), ylim=c(-17,6), axes=F, xlab= "Phenological shift between species", ylab= "Phenological shift in blackcap")
-for(i in 1:19){
-  arrows((DP[i]-DP_sd[i]),DP_sylatr[i],(DP[i]+DP_sd[i]),DP_sylatr[i],length=0, angle=90, code=3,col=cc)
-  arrows(DP[i],(DP_sylatr[i]-DP_sd_sylatr[i]),DP[i],(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
-}
-points(DP[1:19], DP_sylatr, lwd=2, pch=19, col="indianred4")
-axis(1)
-axis(2, las=2)
-mtext("c",side=3,line=0.5,at=-24,cex=1.1)
-
-
-
-
-i=1
-
 ##################################################################
 # GAM SYLBOR
 ##################################################################
 
-###### Par curiosité décalage arrivée des fauvettes des jardins  
-
 library(gamm4)
 
 # Préparation des valeurs d'incrémentation et du nombre d'années
-IntervalleTemps <- seq(-20,+15,1)  
+IntervalleTemps <- seq(-30,+15,1)  
 l <- length(IntervalleTemps)
 annees <- as.vector(unique(data_sylbor$annee))
 Nombre_annees <- length(annees)-1
 data_annee_ref <- subset(data_sylbor, annee=="2019")
-out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees),"a2"=rep(0,Nombre_annees))
+out3 <- data.frame('annee'=rep(0,Nombre_annees),"Decalage_pheno"=rep(0,Nombre_annees),"min"=rep(0,Nombre_annees),"a2"=rep(0,Nombre_annees),'sd'=rep(0,Nombre_annees))
 a <- rep(0,Nombre_annees)
 a2 <- rep(0,Nombre_annees)
 
@@ -334,7 +282,7 @@ for (i in 1:Nombre_annees) {
     data_annee$date <- rep(NA, nrow(data_annee))
     
     ### Boucle permettant de créer les nouvelles dates décalées de SYLBOR en rajoutant le décalage 
-    # phénologique testé sans toucher à SYLATR qui sert de référence. 
+    # phénologique testé sans toucher à sylbor qui sert de référence. 
     # Ainsi, une valeur de décalage phénologique négative qu'on avance les données de SYLBOR 
     for (j in 1:nrow(data_annee)){
       if (data_annee$annee[j]=="2019"){
@@ -373,7 +321,7 @@ for (i in 1:Nombre_annees) {
   out2$DT    <- out1$DT[(a[i]-5):(a[i]+5)]
   out2$annee <- annees[i]
   # 
-  # ### Partie du programme qui opère une régression quadratique pour estimer le décalage phénologique entre les données de sylbor et sylatr
+  # ### Partie du programme qui opère une régression quadratique pour estimer le décalage phénologique entre les données de sylbor et sylbor
   DT_carre <- out2$DT * out2$DT
   Regression_quadratique <- summary(glm(out2$AIC ~ DT_carre + out2$DT)) 
   # 
@@ -381,44 +329,75 @@ for (i in 1:Nombre_annees) {
   out3$Decalage_pheno[i] <- (-Regression_quadratique[[12]][3]/(2*Regression_quadratique[[12]][2]))		
   out3$min[i] <- IntervalleTemps[a[i]]
   out3$a2[i] <- IntervalleTemps[a2[i]]
-  
+  out3$sd[i] <- sqrt((1/Regression_quadratique[[12]][2])) 
   
   rm(data_annee,out1,out2,Regression_quadratique,DT_carre,h,data_annee_test)
 }
 
-DP_sylbor<- out3$Decalage_pheno
+DP_sylbor <- out3$Decalage_pheno
+DP_sd_sylbor <- out3$sd
 save(DP_sylbor,file = here::here('output',"DP_sylbor.RData"))
+save(DP_sd_sylbor,file = here::here('output',"DP_sd_sylbor.RData"))
 
 
-par(mfrow=c(1,2))
-par(cex=0.9, mai=c(0.7,0.8,0.5,0.1))
-color<-c("#FF8830","#A6B06D","#589482","#8C2423")
-plot(DP[1:19], c(DP_sylatr[1:18],0), lwd=2, pch=19, col=color[2], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "decalage phénologique selon de la reproduction chez les têtes noires")
-axis(1)
-axis(2, seq(-20,5,3),seq(-20,5,3), las=2)
-plot(DP[1:19], c(DP_sylbor[1:18],0), lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "decalage phénologique selon de la reproduction chez les jardins")
-axis(1)
-axis(2, las=2)
+############ Comparaison decalage pheno et decalage arrivée fauvettes à tête noire
 
 load(here::here('output','DP.RData'))
+load(here::here('output','DP_sd.RData'))
+
 load(here::here('output','DP_sylatr.RData'))
+load(here::here('output','DP_sd_sylatr.RData'))
+
 load(here::here('output','DP_sylbor.RData'))
-load(here::here('output','index_sylatr_point.RData'))
+load(here::here('output','DP_sd_sylbor.RData'))
 
-plot(seq(1,19,1), DP_sylbor2[1:19], ylim=c(-30,7), lwd=2, pch=19, col=color[2], axes=F, xlab= "année", ylab= "decalage phénologique selon les années de la reproduction des têtes noires")
-points(seq(1.2,19.2,1), c(DP_sylatr[1:18],0), lwd=2, pch=19, col=color[1])
+DP_sd_sylatr <- c(DP_sd_sylatr,0)
+DP_sylatr <- c(DP_sylatr,0)
+
+DP_sd_sylbor <- c(DP_sd_sylbor,0)
+DP_sylbor <- c(DP_sylbor,0)
+
+
+par(mfrow=c(1,3))
+color<-c("#2B2D42","#E4BB97","#D08C60","indianred4")
+cc <- adjustcolor("#736B60", alpha.f = 0.4)
+
+plot(1:19,DP[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-23,-3), axes=F, xlab= "years", ylab= "Interspecific phenological shift")
+for(i in 1:19){
+  arrows(i,(DP[i]-DP_sd[i]),i,(DP[i]+DP_sd[i]),length=0, angle=0, code=3,col=cc)
+}
+points(1:19,DP[1:19],lwd=2, pch=19, col=color[4])
+axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
+axis(2, las=2)
+mtext("a",side=3,line=-1,at=-1,cex=1.1)
+
+# plot(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-17,6), axes=F, xlab= "years", ylab= "Phenological shift in blackcap")
+# for(i in 1:19){
+#   arrows(i,(DP_sylatr[i]-DP_sd_sylatr[i]),i,(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
+# }
+# points(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1])
+# axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
+# axis(2, las=2)
+# mtext("b",side=3,line=0.5,at=-1,cex=1.1)
+
+plot(DP[1:19], DP_sylatr, lwd=2, pch=19, col=color[1], xlim=c(-22,-2), ylim=c(-17,8), axes=F, xlab= "Interspecific phenological shift", ylab= "Blackcap intraspecific phenological shift")
+for(i in 1:19){
+  arrows((DP[i]-DP_sd[i]),DP_sylatr[i],(DP[i]+DP_sd[i]),DP_sylatr[i],length=0, angle=90, code=3,col=cc)
+  arrows(DP[i],(DP_sylatr[i]-DP_sd_sylatr[i]),DP[i],(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
+}
+points(DP[1:19], DP_sylatr, lwd=2, pch=19, col=color[1])
 axis(1)
 axis(2, las=2)
+mtext("b",side=3,line=-1,at=-24,cex=1.1)
 
-plot(seq(1,19,1), DP, ylim=c(-30,7), lwd=2, pch=19, col=color[2], axes=F, xlab= "année", ylab= "decalage phénologique selon les années de la reproduction des têtes noires")
+plot(DP[1:19], DP_sylbor, lwd=2, pch=19, col=color[1], xlim=c(-22,-2), ylim=c(-17,8), axes=F, xlab= "Interspecific phenological shift", ylab= "Garden warbler intraspecific phenological shift")
+for(i in 1:19){
+  arrows((DP[i]-DP_sd[i]),DP_sylbor[i],(DP[i]+DP_sd[i]),DP_sylbor[i],length=0, angle=90, code=3,col=cc)
+  arrows(DP[i],(DP_sylbor[i]-DP_sd_sylbor[i]),DP[i],(DP_sylbor[i]+DP_sd_sylbor[i]),length=0, angle=0, code=3,col=cc)
+}
+points(DP[1:19], DP_sylbor, lwd=2, pch=19, col=color[3])
 axis(1)
 axis(2, las=2)
+mtext("c",side=3,line=-1,at=-24,cex=1.1)
 
 
-plot(DP[2:19], index_sylatr_point[[1]], lwd=2, pch=19, col=color[1], axes=F, xlab= "decalage phenologique entre fauvettes", ylab= "nombre de sylatr en log")
-axis(1)
-axis(2, las=2)
-
-plot(c(DP_sylatr[2:18],0), index_sylatr_point[[1]], lwd=2, pch=19, col=color[2], axes=F, xlab= "decalage phenologique entre sylatr", ylab= "nombre de sylatr en log")
-axis(1)
-axis(2, las=2)

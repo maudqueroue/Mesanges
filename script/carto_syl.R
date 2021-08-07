@@ -51,10 +51,12 @@ ggplot2::ggplot(Fr) +
   ggplot2::xlim(-4.5, 7.8) +
   ggplot2::ylim(42.5,51) +
   ggplot2::geom_sf() +
+  ggplot2::geom_segment(ggplot2::aes(x = -2, y = 45, xend = 7.5, yend = 45),linetype="dashed",size=1.3) +
   ggplot2::geom_point(data = data, ggplot2::aes(x= long, y=lat, color=type, shape = type, size=type)) +
   ggplot2::scale_color_manual(values=c('#C75146','#540804'),name='',labels=c('Count points','CR sites')) +
   ggplot2::scale_shape_manual(values=c(19,17,17),name='',labels=c('Count points','CR sites')) +
   ggplot2::scale_size_manual(values=c(0.9,3,3),name='',labels=c('Count points','CR sites')) +
+  ggplot2::geom_text(x=-2.8, y=45, label="45°N",size=3)+
   ggplot2::theme_minimal()
 
 

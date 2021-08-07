@@ -147,7 +147,7 @@ library(gamm4)
 #pheno=function(Borne_inf,Borne_Sup,Resolution){
 
 # Préparation des valeurs d'incrémentation et du nombre d'années
-IntervalleTemps <- seq(-30,5,1)  
+IntervalleTemps <- seq(-30,15,1)  
 l <- length(IntervalleTemps)
 annees <- as.vector(unique(data$annee))
 Nombre_annees <- length(annees)
