@@ -371,14 +371,6 @@ axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
 axis(2, las=2)
 mtext("a",side=3,line=-1,at=-1,cex=1.1)
 
-# plot(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-17,6), axes=F, xlab= "years", ylab= "Phenological shift in blackcap")
-# for(i in 1:19){
-#   arrows(i,(DP_sylatr[i]-DP_sd_sylatr[i]),i,(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
-# }
-# points(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1])
-# axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
-# axis(2, las=2)
-# mtext("b",side=3,line=0.5,at=-1,cex=1.1)
 
 plot(DP[1:19], DP_sylatr, lwd=2, pch=19, col=color[1], xlim=c(-22,-2), ylim=c(-17,8), axes=F, xlab= "Interspecific phenological shift", ylab= "Blackcap intraspecific phenological shift")
 for(i in 1:19){
@@ -400,4 +392,27 @@ axis(1)
 axis(2, las=2)
 mtext("c",side=3,line=-1,at=-24,cex=1.1)
 
+
+# annexes 
+par(mfrow=c(1,2))
+color<-c("#2B2D42","#E4BB97","#D08C60","indianred4")
+cc <- adjustcolor("#736B60", alpha.f = 0.4)
+
+plot(1:19,DP_sylbor[1:19], lwd=2, pch=19, col=color[3], xlim=c(0,19), ylim=c(-17,6), axes=F, xlab= "years", ylab= "Intraspecific phenological shift in garden warbler")
+for(i in 1:19){
+  arrows(i,(DP_sylbor[i]-DP_sd_sylbor[i]),i,(DP_sylbor[i]+DP_sd_sylbor[i]),length=0, angle=0, code=3,col=cc)
+}
+points(1:19,DP_sylbor[1:19], lwd=2, pch=19, col=color[3])
+axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
+axis(2, las=2)
+mtext("a",side=3,line=0.5,at=-1,cex=1.1)
+
+plot(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1], xlim=c(0,19), ylim=c(-17,6), axes=F, xlab= "years", ylab= "Intraspecific phenological shift in blackcap")
+for(i in 1:19){
+  arrows(i,(DP_sylatr[i]-DP_sd_sylatr[i]),i,(DP_sylatr[i]+DP_sd_sylatr[i]),length=0, angle=0, code=3,col=cc)
+}
+points(1:19,DP_sylatr[1:19], lwd=2, pch=19, col=color[1])
+axis(1, at=seq(1,19,3),labels = seq(2001,2019,3))
+axis(2, las=2)
+mtext("b",side=3,line=0.5,at=-1,cex=1.1)
 
