@@ -103,12 +103,12 @@ rCJS_vv_sum <- nimbleFunction(
 
 #Histoire de vie individus
 # Les histoires de vie sont 1=juvenile, 2=adulte, 0= pas vu  
-load('hvie_parcae.RData')
-load('hvie_parmaj.RData')
+load(here::here('output','hvie_parcae.RData'))
+load(here::here('output','hvie_parmaj.RData'))
 
 # Histoire de vie des sites
 # nombre de capture secondaires par an
-load('hvie_ID_PROG_tits.RData')
+load(here::here('output','hvie_ID_PROG_tits.RData'))
 
 # Nb ind
 N_bt <- dim(hvie_parcae)[1]
